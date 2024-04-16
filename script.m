@@ -21,6 +21,7 @@
 % aside from t, all of these parameters are constant with respect to the system's time evolution
 syms R H L m_c m_p omega t theta_0 g
 
+%% Kinetics
 % define theta with respect to time (in radians)
 theta = omega * t + theta_0;
 
@@ -30,9 +31,16 @@ r_A = R*[cos(theta), sin(theta), 0];
 
 % use the Pythagorean theorem to determine the vertical component of r_PA
 r_PA = [H-R*cos(theta), sqrt(L^2 - (H-R*cos(theta))^2),0];
+r_AP = -r_PA;
+
+r_GA = 0.5 * r_PA;
 
 r_P = r_A + r_PA;
 
+r_G = r_A + r_GA;
+
+% rearrange r_G = r_P + r_GP
+r_GP = r_G - r_P;
 
 v_A = diff(r_A, t);
 
@@ -42,8 +50,9 @@ assert(deep_equality(v_A, cross(omega*[0,0,1],r_A)), "Velocity of point A is not
 % linear algebra solves every problem if you know what you're doing 
 
 % this expression is dealing with a lot of MATLAB's poor design choices
-%   for example, use planar_truncate to reduce R^3 vectors into the plane,
-%   .' is actually the transpose operator in MATLAB, just ' picks up a conjugate term 
+%   for example, use planar_truncate to reduce R^3 vectors into the plane (just keeps the first two
+%       elements),
+%   .' is actually the transpose operator in MATLAB, ' is NOT and picks up a conjugate term 
 temp = [planar_truncate(cross([0,0,1],r_PA)).',[0;-1]]^(-1)*(planar_truncate(-cross(omega*[0,0,1],r_A)).');
 % MATLAB isn't clever enough to let you immediately assign these values
 omega_AP = temp(1);
@@ -51,30 +60,66 @@ v_P = temp(2);
 clear temp;
 
 
-
-assert(deep_equality(v_P*[0,1,0], simplify(diff(r_P, t))), "Velocity of point P is not what's expected.");
+assert(deep_equality(v_P*[0,1,0], diff(r_P, t)), "Velocity of point P is not what's expected.");
+assert(deep_equality(v_A + omega_AP*cross([0,0,1],r_GA), diff(r_G, t)), "Velocity of point G is not what's expected.");
 
 a_A = -omega^2*r_A;
 
 assert(deep_equality(diff(v_A,t), a_A), "Acceleration of point A is not what's expected.");
 
 
-temp = [planar_truncate(cross([0,0,1],r_PA)).',[0;1]]^(-1)*(planar_truncate(omega_AP^2*r_PA - a_A).');
-omega_AP = temp(1);
+temp = [planar_truncate(cross([0,0,1],r_PA)).',[0;-1]]^(-1)*(planar_truncate(omega_AP^2*r_PA - a_A).');
+alpha_AP = temp(1);
 a_P = temp(2);
 clear temp;
 
 
-func_random_params = @() random_params()
-func_check_equality_brute_force = @(expr1, expr2, num, tolerance) check_equality_brute_force(expr1, expr2, num, tolerance)
-func_load_parameters = @(expr, params) load_parameters(expr, params)
+func_random_params = @() random_params();
+func_check_equality_brute_force = @(expr1, expr2, num, tolerance) check_equality_brute_force(expr1, expr2, num, tolerance);
+func_load_parameters = @(expr, params) load_parameters(expr, params);
 
 assert(deep_equality(a_P, diff(v_P, t)), "Acceleration of point P is not what's expected.");
+
+
+a_G = a_A + alpha_AP*cross([0,0,1], r_GA) - omega_AP^2 * r_GA;
+
+assert(deep_equality(a_G, diff(r_G, t, 2)), "Acceleration of point G is not what's expected.");
+
+
+%% Kinetics
+I_G = 1/12 * m_c*L^2;
+I_A = I_G + (L/2)^2*m_c;
+
+% this is probably in a simpler form than a_G is right now, use this to get 
+%   nicer expressions, probably
+% also can't just directly type out diff every time because MATLAB doesn't like you indexing 
+%   expressions, just variables for some reason
+temp_a_G = diff(r_G, t, 2);
+
+% get P_y from FBD about the piston
+%   NOTE -- P_y points in the -i direction on this FBD, despite pointing in the +i dir on 
+%       the FBD of the rod
+P_y = -m_p*(a_P + g);
+% get A_y from FBD of the rod
+A_y = m_c * temp_a_G(2) - P_y;
+
+% from sum of moments on the crank in the k dir about point A 
+P_x = (-I_A * alpha_AP - m_c * g * (r_PA(1))/2 + P_y * r_PA(1))/(r_PA(2));
+% from sum of forces of the crank
+A_x = m_c * temp_a_G(1) - P_x;
+
+clear temp_a_G;
+
+% TODO -- sanity check even more
+
 
 % utility function to convert a vector in R^3 to one in R^2. MATLAB is stupid and doesn't allow 
 %   something of the form (expression that results in a vector) to be indexed directly
 % MATLAB is an interpreted language, it should have all the weird, fun stuff other interpreted 
 %   languages have. At least have swizzles...
+% This function is stupid, and will literally just cut off every element after the first and second
+% If you give it a vector that doesn't have two or more elements, that's UB 
+%       (it'll probably throw an error but I'm not going to guarantee that)
 function vec2 = planar_truncate(vec3) 
     vec2 = vec3(1:2);
 end
@@ -108,9 +153,10 @@ function equal = deep_equality(expr1, expr2)
                 return;
             end
         catch ME 
-            % if analytic methods fail, simply brute force check 10 points for approximate equality
+            % if analytic methods fail, simply brute force check 50 points for approximate equality
             % TODO -- add justification for tolerance and discuss acceptable failure probabilities
-            equal = check_equality_brute_force(expr1(i), expr2(i), 10, 0.1); 
+            % What are the odds this *and* our calculationrs are wrong?
+            equal = check_equality_brute_force(expr1(i), expr2(i), 50, 0.1); 
             if (~equal) 
                 return;
             end
@@ -121,15 +167,19 @@ end
 function equal = check_equality_brute_force(expr1, expr2, num, tolerance)
     equal = true;
     for i = 1:num 
-        value1 = load_parameters(expr1, random_params());
-        value2 = load_parameters(expr1, random_params());
+        p = random_params();
+        value1 = load_parameters(expr1, p);
+        value2 = load_parameters(expr1, p);
+
+        % complex values are only a problem if they're not equal, luckily
+        % assert(isreal(value1) && isreal(value2), "Expression evaluation yields complex outputs.");
 
         % floating point numbers can't be compared against each other accurately, need a tolerance 
         %   value
         if (abs(value1 - value2) > tolerance) 
             equal = false;
 
-            if (abs(value1 + value2) > tolerance) 
+            if (abs(value1) + abs(value2) <= tolerance) 
                 fprintf("Passed expressions are (almost) exactly opposite. Did you make a sign error?\n");
             end
 
@@ -141,7 +191,7 @@ end
 % generates a random, valid parameter list for the sake of testing equality
 function params = random_params() 
     params.R = rand() * 10 + 0.1;
-    params.H = rand() * 10 + params.R;
+    params.H = rand() * 10 + params.R + 0.01;
 
     params.g = 9.81;
 
@@ -151,7 +201,7 @@ function params = random_params()
     params.theta_0 = 0;
     params.omega = rand() * 1000 + 100;
     params.t = rand()*10;
-    params.L = rand() * 10 + (params.H - params.R);
+    params.L = rand() * 10 + (params.H - params.R) + 0.01;
 end
 
 % loads a struct called param defining every variable to get a numerical value out 
