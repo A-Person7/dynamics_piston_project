@@ -64,6 +64,11 @@ omega_AP = temp(1);
 a_P = temp(2);
 clear temp;
 
+
+func_random_params = @() random_params()
+func_check_equality_brute_force = @(expr1, expr2, num, tolerance) check_equality_brute_force(expr1, expr2, num, tolerance)
+func_load_parameters = @(expr, params) load_parameters(expr, params)
+
 assert(deep_equality(a_P, diff(v_P, t)), "Acceleration of point P is not what's expected.");
 
 % utility function to convert a vector in R^3 to one in R^2. MATLAB is stupid and doesn't allow 
@@ -74,13 +79,9 @@ function vec2 = planar_truncate(vec3)
     vec2 = vec3(1:2);
 end
 
-% the function isequal checks if two symbolic expressions are written in the same form, not if 
-%   they're algebraically equivalent. the function isAlways (one has to wonder how MATLAB comes 
-%   up with their naming conventions, their capitalizationis all over the place) seems to operate 
-%   one element at a time
-% This is a wrapper function that runs isAlways on each component of two symbolic expressions 
-%   to see if they're equal
-% Returns a single, logical scalar representing whether both expressions are equal for all elements
+% Checks if two symbolic functions are equivalent 
+%   (well, really, it checks if they're functionally equivalent, or, if that fails to work, checks 
+%       if they're significantly close).
 function equal = deep_equality(expr1, expr2) 
     equal = true;
     if (length(expr1) ~= length(expr2)) 
@@ -107,25 +108,10 @@ function equal = deep_equality(expr1, expr2)
                 return;
             end
         catch ME 
-            % if (check_equality_brute_force(s_expr1, s_expr2, 10, 0.1)) 
-            if (check_equality_brute_force(expr1(i), expr2(i), 10, 0.1)) 
-                fprintf("Brute force equality check works, seems good enough");
-                return;
-            end
-
-            in = "default";
-            while ~(contains(in, "y") || isempty(in) || contains(in, "n"))
-                fprintf("Unable to determine equality via MATLAB analytical techniques.\n");
-                % disp(latex(simplifyFraction(expand(s_expr1))));
-                % disp(latex(simplifyFraction(expand(s_expr2))));
-
-                disp(expand(s_expr1));
-                disp(expand(s_expr2));
-
-                in = lower(input("Are the above expressions equal? y/n ", "s"));
-            end
-            if contains(in, "n")
-                equal = false;
+            % if analytic methods fail, simply brute force check 10 points for approximate equality
+            % TODO -- add justification for tolerance and discuss acceptable failure probabilities
+            equal = check_equality_brute_force(expr1(i), expr2(i), 10, 0.1); 
+            if (~equal) 
                 return;
             end
         end
@@ -135,15 +121,18 @@ end
 function equal = check_equality_brute_force(expr1, expr2, num, tolerance)
     equal = true;
     for i = 1:num 
-        value1 = load_parameters(expr1, random_params)
-        value2 = load_parameters(expr1, random_params)
-
-        in = input("Delay: ");
+        value1 = load_parameters(expr1, random_params());
+        value2 = load_parameters(expr1, random_params());
 
         % floating point numbers can't be compared against each other accurately, need a tolerance 
         %   value
         if (abs(value1 - value2) > tolerance) 
             equal = false;
+
+            if (abs(value1 + value2) > tolerance) 
+                fprintf("Passed expressions are (almost) exactly opposite. Did you make a sign error?\n");
+            end
+
             return;
         end
     end
@@ -151,9 +140,8 @@ end
 
 % generates a random, valid parameter list for the sake of testing equality
 function params = random_params() 
-    params.H = rand() * 10 + 0.1;
     params.R = rand() * 10 + 0.1;
-    params.L = rand() * 10 + 0.1;
+    params.H = rand() * 10 + params.R;
 
     params.g = 9.81;
 
@@ -163,6 +151,7 @@ function params = random_params()
     params.theta_0 = 0;
     params.omega = rand() * 1000 + 100;
     params.t = rand()*10;
+    params.L = rand() * 10 + (params.H - params.R);
 end
 
 % loads a struct called param defining every variable to get a numerical value out 
