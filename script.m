@@ -1,62 +1,205 @@
-%% Global variables
-% global variables are always great practice and a good idea
-global MACRO_TARGET_FILE
-MACRO_TARGET_FILE="macro_regex";
+% Notes:
+%   Vectors of the form r_AB refer to the position vector of A with respect to the position of B
+%   All vectors are defined in terms of the given Cartesian basis vectors, with an additional 
+%       elementary vector k defined such that i cross j = k to span three-space and describe 
+%       rotation.
+%   All positions and velocities without a subscript to indicate where they're defined with 
+%       respect to are defined with respect to point O 
+%       - e.g. v_A is the vector of the velocity of point A with respect to O 
+%       - O is fixed, and therefore it has no velocity or acceleration 
+%   MATLAB is very weird, and amongst its oddities, it's not strongly typed. 
+%       Furthermore, since symbolic variables act like their corresponding Greek letters and 
+%       add subscrips based on the literal name of the variable when outputting display text, 
+%       it may be hard to differentiate what's a vector and what's a scalar. I have come to the 
+%       executive decision that it's better to keep track in my head and in my code, then to 
+%       Hungarian-type every variable name, which would likely decrease legibility even more.
 
 
 %% Parameter initialization 
-syms R H L m_c m_p omega time
-
-initial_angle = 0;
+% t is time, theta_0 is the angle theta when t = 0 seconds, g is gravity,
+%   other parameters are given in problem description
+% aside from t, all of these parameters are constant with respect to the system's time evolution
+syms R H L m_c m_p omega t theta_0 g
 
 % define theta with respect to time (in radians)
-theta = omega * time + initial_angle;
+theta = omega * t + theta_0;
 
-% position of P with respect to O
+% position of A with respect to O
 %   define r in R^3 so we can take the cross product without adding on extra dimensions later
-r_PO = R*[cos(theta), sin(theta), 0];
+r_A = R*[cos(theta), sin(theta), 0];
 
-expand_macro("UNIQUEID_ALPHA", r_PO);
+% use the Pythagorean theorem to determine the vertical component of r_PA
+r_PA = [H-R*cos(theta), sqrt(L^2 - (H-R*cos(theta))^2),0];
 
-latex(r_PO);
+r_P = r_A + r_PA;
 
 
-% Searches through the file MACRO_TARGET_FILE, and replaces instances of unique_identifier with 
-%   the LaTeX formatting generated from the syms variable expression expr
-% To disable this functionality, define MACRO_TARGET_FILE as something other than a string
-function expand_macro(unique_identifier, expr) 
-    global MACRO_TARGET_FILE
-   
-    if (class(MACRO_TARGET_FILE) ~= 'string') 
-        disp("Macro expansion disabled.");
+v_A = diff(r_A, t);
+
+% sanity check
+assert(deep_equality(v_A, cross(omega*[0,0,1],r_A)), "Velocity of point A is not what's expected.");
+
+% linear algebra solves every problem if you know what you're doing 
+
+% this expression is dealing with a lot of MATLAB's poor design choices
+%   for example, use planar_truncate to reduce R^3 vectors into the plane,
+%   .' is actually the transpose operator in MATLAB, just ' picks up a conjugate term 
+temp = [planar_truncate(cross([0,0,1],r_PA)).',[0;-1]]^(-1)*(planar_truncate(-cross(omega*[0,0,1],r_A)).');
+% MATLAB isn't clever enough to let you immediately assign these values
+omega_AP = temp(1);
+v_P = temp(2);
+clear temp;
+
+
+
+assert(deep_equality(v_P*[0,1,0], simplify(diff(r_P, t))), "Velocity of point P is not what's expected.");
+
+a_A = -omega^2*r_A;
+
+assert(deep_equality(diff(v_A,t), a_A), "Acceleration of point A is not what's expected.");
+
+
+temp = [planar_truncate(cross([0,0,1],r_PA)).',[0;1]]^(-1)*(planar_truncate(omega_AP^2*r_PA - a_A).');
+omega_AP = temp(1);
+a_P = temp(2);
+clear temp;
+
+assert(deep_equality(a_P, diff(v_P, t)), "Acceleration of point P is not what's expected.");
+
+% utility function to convert a vector in R^3 to one in R^2. MATLAB is stupid and doesn't allow 
+%   something of the form (expression that results in a vector) to be indexed directly
+% MATLAB is an interpreted language, it should have all the weird, fun stuff other interpreted 
+%   languages have. At least have swizzles...
+function vec2 = planar_truncate(vec3) 
+    vec2 = vec3(1:2);
+end
+
+% the function isequal checks if two symbolic expressions are written in the same form, not if 
+%   they're algebraically equivalent. the function isAlways (one has to wonder how MATLAB comes 
+%   up with their naming conventions, their capitalizationis all over the place) seems to operate 
+%   one element at a time
+% This is a wrapper function that runs isAlways on each component of two symbolic expressions 
+%   to see if they're equal
+% Returns a single, logical scalar representing whether both expressions are equal for all elements
+function equal = deep_equality(expr1, expr2) 
+    equal = true;
+    if (length(expr1) ~= length(expr2)) 
+        equal = false;
         return;
     end
+    for i = 1:length(expr1) 
+        s_expr1 = simplify(expr1(i));
+        s_expr2 = simplify(expr2(i));
 
-    fid = fopen(MACRO_TARGET_FILE);
-    
-    if (fid == -1) 
-        % assert("Failed to find " + MACRO_TARGET_FILE + " in your working directory. Perhaps you " ...
-        %   + "meant to cd into a different one, or meant to disable macro expansion?");
-        % create file
-        fid = fopen(MACRO_TARGET_FILE,'w');
+
+        % do a heuristical check to see if the expressions simplify into the same form
+        if (isequal(s_expr1, s_expr2))
+            break;
+        end
+
+        s_expr1 = simplify(combine(simplifyFraction(expr1(i))), 'Steps',50);
+        s_expr2 = simplify(combine(simplifyFraction(expr2(i))), 'Steps',50);
+
+        try 
+            % make isAlways throw an error when it can neither prove nor disprove equality
+            if (~isAlways(s_expr1 == s_expr2, Unknown="error"))
+                equal = false;
+                return;
+            end
+        catch ME 
+            % if (check_equality_brute_force(s_expr1, s_expr2, 10, 0.1)) 
+            if (check_equality_brute_force(expr1(i), expr2(i), 10, 0.1)) 
+                fprintf("Brute force equality check works, seems good enough");
+                return;
+            end
+
+            in = "default";
+            while ~(contains(in, "y") || isempty(in) || contains(in, "n"))
+                fprintf("Unable to determine equality via MATLAB analytical techniques.\n");
+                % disp(latex(simplifyFraction(expand(s_expr1))));
+                % disp(latex(simplifyFraction(expand(s_expr2))));
+
+                disp(expand(s_expr1));
+                disp(expand(s_expr2));
+
+                in = lower(input("Are the above expressions equal? y/n ", "s"));
+            end
+            if contains(in, "n")
+                equal = false;
+                return;
+            end
+        end
+    end
+end
+
+function equal = check_equality_brute_force(expr1, expr2, num, tolerance)
+    equal = true;
+    for i = 1:num 
+        value1 = load_parameters(expr1, random_params)
+        value2 = load_parameters(expr1, random_params)
+
+        in = input("Delay: ");
+
+        % floating point numbers can't be compared against each other accurately, need a tolerance 
+        %   value
+        if (abs(value1 - value2) > tolerance) 
+            equal = false;
+            return;
+        end
+    end
+end
+
+% generates a random, valid parameter list for the sake of testing equality
+function params = random_params() 
+    params.H = rand() * 10 + 0.1;
+    params.R = rand() * 10 + 0.1;
+    params.L = rand() * 10 + 0.1;
+
+    params.g = 9.81;
+
+    params.m_c = rand() * 10 + 0.1;
+    params.m_p = rand() * 10 + 0.1;
+
+    params.theta_0 = 0;
+    params.omega = rand() * 1000 + 100;
+    params.t = rand()*10;
+end
+
+% loads a struct called param defining every variable to get a numerical value out 
+%   all (useful) fields of param must be initialized to an object that can be 
+%       cast to a double
+%   t is allowed to be a vector (array), everything else must be a scalar
+%   g is allowed to be left uninitialized if you want it to default to 9.81 m/s^2
+function out = load_parameters(expr, params) 
+    syms R H L m_c m_p omega t theta_0 g
+    % TODO -- conver top terms to ratios
+    assert(isfield(params, 'H'), "Parameter field property 'H' is not defined.");
+    assert(isfield(params, 'R'), "Parameter field property 'R' is not defined.");
+    assert(isfield(params, 'L'), "Parameter field property 'L' is not defined.");
+
+    assert(isfield(params, 'm_c'), "Parameter field property 'm_c' is not defined.");
+    assert(isfield(params, 'm_p'), "Parameter field property 'm_p' is not defined.");
+    assert(isfield(params, 'omega'), "Parameter field property 'omega' is not defined.");
+    assert(isfield(params, 'theta_0'), "Parameter field property 'theta_0' is not defined.");
+    assert(isfield(params, 't'), "Parameter field property 't' is not defined.");
+
+    if (~isfield(params, 'g'))
+        fprintf("Defaulting gravity to 9.81 m/s^2. If you are not using SI base units, " ...
+            + "please define this properly for your coherent unit system.\n");
+        params.g = 9.81;
     end
 
-    f = join(string(fread(fid, '*char')),"");
-    fclose(fid);
-    
-    %f = replace(join(string(f),""), unique_identifier, string(latex(expr)));
+    expr = subs(expr, "H", params.H);
+    expr = subs(expr, "R", params.R);
+    expr = subs(expr, "L", params.L);
+    expr = subs(expr, "m_c", params.m_c);
+    expr = subs(expr, "m_p", params.m_p);
+    expr = subs(expr, "omega", params.omega);
+    expr = subs(expr, "theta_0", params.theta_0);
+    expr = subs(expr, "t", params.t);
+    expr = subs(expr, "g", params.g);
 
-    % the 'w' here means the file is writable. It also does some weird stuff and erases it, so only 
-    %   open it after the file has been read and edited
-    fid = fopen(MACRO_TARGET_FILE,'w');
-    if (fid == -1) 
-        % I have no idea why this might happen, unless perhaps you are *very* quick deleting 
-        %   files during script execution, or you put a permission scheme on it so it can be 
-        %   read but not written to
-        assert("?");
-    end
-
-
-    fprintf(fid, "%s\n=%s=%s=g;", f, unique_identifier, string(latex(expr)));
-    fclose(fid);
+    % cast result from symbolic expression to double
+    % at this point, every variable in expr ought to have been substituded out with a numeric form 
+    out = double(expr);
 end
