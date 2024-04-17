@@ -53,7 +53,10 @@ assert(deep_equality(v_A, cross(omega*[0,0,1],r_A)), "Velocity of point A is not
 %   for example, use planar_truncate to reduce R^3 vectors into the plane (just keeps the first two
 %       elements),
 %   .' is actually the transpose operator in MATLAB, ' is NOT and picks up a conjugate term 
-temp = [planar_truncate(cross([0,0,1],r_PA)).',[0;-1]]^(-1)*(planar_truncate(-cross(omega*[0,0,1],r_A)).');
+% use \ instead of ^(-1) to allow MATLAB to optimize this and produce warnings for non-unique 
+%   equations
+temp = [planar_truncate(cross([0,0,1],r_PA)).',[0;-1]] \ (planar_truncate(-cross(omega*[0,0,1],r_A)).');
+% temp = [planar_truncate(cross([0,0,1],r_PA)).',[0;-1]]^(-1)* (planar_truncate(-cross(omega*[0,0,1],r_A)).');
 % MATLAB isn't clever enough to let you immediately assign these values
 omega_AP = temp(1);
 v_P = temp(2);
@@ -68,7 +71,8 @@ a_A = -omega^2*r_A;
 assert(deep_equality(diff(v_A,t), a_A), "Acceleration of point A is not what's expected.");
 
 
-temp = [planar_truncate(cross([0,0,1],r_PA)).',[0;-1]]^(-1)*(planar_truncate(omega_AP^2*r_PA - a_A).');
+% temp = [planar_truncate(cross([0,0,1],r_PA)).',[0;-1]]^(-1)*(planar_truncate(omega_AP^2*r_PA - a_A).');
+temp = [planar_truncate(cross([0,0,1],r_PA)).',[0;-1]] \ (planar_truncate(omega_AP^2*r_PA - a_A).');
 alpha_AP = temp(1);
 a_P = temp(2);
 clear temp;
@@ -76,7 +80,7 @@ clear temp;
 
 func_random_params = @() random_params();
 func_check_equality_brute_force = @(expr1, expr2, num, tolerance) check_equality_brute_force(expr1, expr2, num, tolerance);
-func_load_parameters = @(expr, params) load_parameters(expr, params);
+func_load_params = @(expr, params) load_params(expr, params);
 
 assert(deep_equality(a_P, diff(v_P, t)), "Acceleration of point P is not what's expected.");
 
@@ -94,7 +98,8 @@ I_A = I_G + (L/2)^2*m_c;
 %   nicer expressions, probably
 % also can't just directly type out diff every time because MATLAB doesn't like you indexing 
 %   expressions, just variables for some reason
-temp_a_G = diff(r_G, t, 2);
+% temp_a_G = diff(r_G, t, 2);
+temp_a_G = a_G;
 
 % get P_y from FBD about the piston
 %   NOTE -- P_y points in the -i direction on this FBD, despite pointing in the +i dir on 
@@ -109,6 +114,32 @@ P_x = (-I_A * alpha_AP - m_c * g * (r_PA(1))/2 + P_y * r_PA(1))/(r_PA(2));
 A_x = m_c * temp_a_G(1) - P_x;
 
 clear temp_a_G;
+
+% save a handle to the function load_params to keep it accessible after running the script
+loadParams = @load_params;
+
+%% Define cases
+case1.R = 0.075;
+case1.m_c = 0.3;
+case1.m_p = 0.4;
+case1.theta_0 = 0;
+case1.g = 9.81;
+case1.L = 3/2*case1.R;
+case1.H = 0*case1.R;
+case1.t = 0:0.001:0.25;
+case1.omega = 1000;
+
+case2.R = 0.075;
+case2.m_c = 0.3;
+case2.m_p = 0.4;
+case2.theta_0 = 0;
+case2.g = 9.81;
+case2.L = 8/3*case1.R;
+case2.H = 5/3*case1.R;
+case2.t = 0:0.001:0.1;
+case2.omega = 5000;
+
+% plot(case1.t, loadParams(A_x, case1))
 
 % TODO -- sanity check even more
 
@@ -168,8 +199,8 @@ function equal = check_equality_brute_force(expr1, expr2, num, tolerance)
     equal = true;
     for i = 1:num 
         p = random_params();
-        value1 = load_parameters(expr1, p);
-        value2 = load_parameters(expr1, p);
+        value1 = load_params(expr1, p);
+        value2 = load_params(expr1, p);
 
         % complex values are only a problem if they're not equal, luckily
         % assert(isreal(value1) && isreal(value2), "Expression evaluation yields complex outputs.");
@@ -209,7 +240,7 @@ end
 %       cast to a double
 %   t is allowed to be a vector (array), everything else must be a scalar
 %   g is allowed to be left uninitialized if you want it to default to 9.81 m/s^2
-function out = load_parameters(expr, params) 
+function out = load_params(expr, params) 
     syms R H L m_c m_p omega t theta_0 g
     % TODO -- conver top terms to ratios
     assert(isfield(params, 'H'), "Parameter field property 'H' is not defined.");
@@ -219,7 +250,12 @@ function out = load_parameters(expr, params)
     assert(isfield(params, 'm_c'), "Parameter field property 'm_c' is not defined.");
     assert(isfield(params, 'm_p'), "Parameter field property 'm_p' is not defined.");
     assert(isfield(params, 'omega'), "Parameter field property 'omega' is not defined.");
-    assert(isfield(params, 'theta_0'), "Parameter field property 'theta_0' is not defined.");
+
+    if(~isfield(params, 'theta_0'))
+        fprintf("Defaulting to an initial angle of 0 radians for t = 0 seconds.\n");
+        params.theta_0 = 0;
+    end
+
     assert(isfield(params, 't'), "Parameter field property 't' is not defined.");
 
     if (~isfield(params, 'g'))
