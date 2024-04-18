@@ -98,8 +98,8 @@ I_A = I_G + (L/2)^2*m_c;
 %   nicer expressions, probably
 % also can't just directly type out diff every time because MATLAB doesn't like you indexing 
 %   expressions, just variables for some reason
-% temp_a_G = diff(r_G, t, 2);
-temp_a_G = a_G;
+temp_a_G = diff(r_G, t, 2);
+%temp_a_G = a_G;
 
 % get P_y from FBD about the piston
 %   NOTE -- P_y points in the -i direction on this FBD, despite pointing in the +i dir on 
@@ -119,6 +119,13 @@ clear temp_a_G;
 loadParams = @load_params;
 
 %% Define cases
+
+% TODO -- seperate case parameters from angular velocities, have a case-template with constants,
+%   make a function that combines a case with an angular velocity to yield a full parameter 
+%   (auto-generate t values for an appropriate range)
+% Also want a function that writes to data files in a pgfplots readable format for display 
+%   purposes
+
 case1.R = 0.075;
 case1.m_c = 0.3;
 case1.m_p = 0.4;
@@ -135,9 +142,12 @@ case2.m_p = 0.4;
 case2.theta_0 = 0;
 case2.g = 9.81;
 case2.L = 8/3*case1.R;
-case2.H = 5/3*case1.R;
-case2.t = 0:0.001:0.1;
-case2.omega = 5000;
+% This used to be 5/3, which resulted in some *interesting* graphs, as well as some divide
+%   by zero errors when the offset ere too small for some reason
+% Change it back if you want to see some steep force jumps and piecewise-esque behavior
+case2.H = 1/3*case1.R;
+case2.t = 0:0.0001:0.05;
+case2.omega = 5000 * 2 * pi / 60;
 
 % plot(case1.t, loadParams(A_x, case1))
 
