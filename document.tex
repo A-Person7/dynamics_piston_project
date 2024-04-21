@@ -1,5 +1,16 @@
+% Disable copyright notice in the bottom right corner of the document since this document 
+%   is not the intellectual property of ASME
+% Technically, ASME standards say all text must be in black when papers are submitted for 
+%   publication, but this isn't going to be submitted so we can enable colorlinks to get 
+%   links to show up as blue.
 \documentclass[nofoot,pdf-a,balance,colorlinks,upint,subscriptcorrection,varvw,mathalfa=cal=boondoxo]{asmeconf}
 \special{papersize=8.5in,11in}
+
+% % enable use of multiple files 
+% % https://www.overleaf.com/learn/latex/Multi-file_LaTeX_projects
+% % \usepackage{subfiles}
+% \usepackage[subpreambles=true]{standalone}
+% \usepackage{import}
 
 \usepackage{amsmath}
 % prevent Bbbk from being overdefined by amsmath and newtxmath (from asmeconf.cls)
@@ -14,6 +25,10 @@
 \usepackage[thinc]{esdiff}
 \usepackage{float}
 \usepackage{graphicx}
+
+% enable use of multiple files 
+% https://www.overleaf.com/learn/latex/Multi-file_LaTeX_projects
+\usepackage{subfiles}
 
 % PDF meta data
 \hypersetup{
@@ -34,26 +49,48 @@
 
     \maketitle
 
+    \begin{nomenclature}
+        \EntryHeading{Forces}
+        \entry{$A$}{Shear force at point A [N]}
+        \entry{$P$}{Shear force at point P [N]}\newline
+
+        \EntryHeading{Constant Parameters}
+        \entry{$\omega$}{Angular velocity of the crank [rad s$^{-1}$]}
+        \entry{$H$}{Offset distance between piston path and crank axis [m]}
+        \entry{$L$}{Length of connecting rod [m]}
+        \entry{$R$}{Distance from crank axis to point A [m]}
+        \entry{$\theta_0$}{Initial angle of crank [rad]}\newline
+        
+        \EntryHeading{Time Evolution Parameters}
+        \entry{$t$}{Time [s]}
+        \entry{$\omega_{AP}$}{Angular velocity of the rod AP [rad s$^{-1}$]}
+        \entry{$\alpha_{AP}$}{Angular acceleration of the rod AP [rad s$^{-2}$]}
+        \entry{$\vec{r}$}{Position [m]}
+        \entry{$\vec{v}$}{Translational velocity [m s$^{-1}$]}
+        \entry{$\vec{a}$}{Translational acceleration [m s$^{-2}$]}\newline 
+
+        \EntryHeading{Superscripts and subscripts}
+        \entry{$x$}{Horizontal component}
+        \entry{$y$}{Vertical component}
+        \entry{$O$}{Point O value}
+        \entry{$A$}{Point A value}
+        \entry{$P$}{Point P value};
+        
+    \end{nomenclature}
+
+
     \section{Solution}
-    \begin{equation}\resizebox{4.00}{!}{$
-
-        A_x = 
-\frac{\frac{g\,m_{c}\,\left(H-R\,\cos\left(\theta _{0}+\omega \,t\right)\right)}{2}+m_{p}\,\left(H-R\,\cos\left(\theta _{0}+\omega \,t\right)\right)\,\left(g-R\,\omega ^2\,\sin\left(\theta _{0}+\omega \,t\right)-\frac{\left(R\,\omega ^2\,\cos\left(\theta _{0}+\omega \,t\right)-\frac{R^2\,\omega ^2\,{\sin\left(\theta _{0}+\omega \,t\right)}^2\,\left(H-R\,\cos\left(\theta _{0}+\omega \,t\right)\right)}{H^2-2\,H\,R\,\cos\left(\theta _{0}+\omega \,t\right)-L^2+R^2\,{\cos\left(\theta _{0}+\omega \,t\right)}^2}\right)\,\left(H-R\,\cos\left(\theta _{0}+\omega \,t\right)\right)}{\sqrt{-H^2+2\,H\,R\,\cos\left(\theta _{0}+\omega \,t\right)+L^2-R^2\,{\cos\left(\theta _{0}+\omega \,t\right)}^2}}+\frac{R^2\,\omega ^2\,{\sin\left(\theta _{0}+\omega \,t\right)}^2\,\sqrt{L^2-{\left(H-R\,\cos\left(\theta _{0}+\omega \,t\right)\right)}^2}}{H^2-2\,H\,R\,\cos\left(\theta _{0}+\omega \,t\right)-L^2+R^2\,{\cos\left(\theta _{0}+\omega \,t\right)}^2}\right)-\frac{L^2\,m_{c}\,\left(R\,\omega ^2\,\cos\left(\theta _{0}+\omega \,t\right)-\frac{R^2\,\omega ^2\,{\sin\left(\theta _{0}+\omega \,t\right)}^2\,\left(H-R\,\cos\left(\theta _{0}+\omega \,t\right)\right)}{H^2-2\,H\,R\,\cos\left(\theta _{0}+\omega \,t\right)-L^2+R^2\,{\cos\left(\theta _{0}+\omega \,t\right)}^2}\right)}{3\,\sqrt{-H^2+2\,H\,R\,\cos\left(\theta _{0}+\omega \,t\right)+L^2-R^2\,{\cos\left(\theta _{0}+\omega \,t\right)}^2}}}{\sqrt{L^2-{\left(H-R\,\cos\left(\theta _{0}+\omega \,t\right)\right)}^2}}-\frac{R\,m_{c}\,\omega ^2\,\cos\left(\theta _{0}+\omega \,t\right)}{2}
+    Let $A$ represent the magnitude of the forces on the pin at A and let $P$ represent the magnitude of the forces on the pin at P. We can derive the following expressions. Using the property of the magnitude of vectors, we can derive the following in terms of equations defined in \ref{appendix:definitions}.
+    \begin{equation}
+        A = \sqrt{A_{x}^2 + A_{y}^2}
     \end{equation}
-    \begin{equation}\resizebox{4.00}{!}{$
-        A_y = 
-m_{p}\,\left(g-R\,\omega ^2\,\sin\left(\theta _{0}+\omega \,t\right)-\frac{\left(R\,\omega ^2\,\cos\left(\theta _{0}+\omega \,t\right)-\frac{R^2\,\omega ^2\,{\sin\left(\theta _{0}+\omega \,t\right)}^2\,\left(H-R\,\cos\left(\theta _{0}+\omega \,t\right)\right)}{H^2-2\,H\,R\,\cos\left(\theta _{0}+\omega \,t\right)-L^2+R^2\,{\cos\left(\theta _{0}+\omega \,t\right)}^2}\right)\,\left(H-R\,\cos\left(\theta _{0}+\omega \,t\right)\right)}{\sqrt{-H^2+2\,H\,R\,\cos\left(\theta _{0}+\omega \,t\right)+L^2-R^2\,{\cos\left(\theta _{0}+\omega \,t\right)}^2}}+\frac{R^2\,\omega ^2\,{\sin\left(\theta _{0}+\omega \,t\right)}^2\,\sqrt{L^2-{\left(H-R\,\cos\left(\theta _{0}+\omega \,t\right)\right)}^2}}{H^2-2\,H\,R\,\cos\left(\theta _{0}+\omega \,t\right)-L^2+R^2\,{\cos\left(\theta _{0}+\omega \,t\right)}^2}\right)-m_{c}\,\left(R\,\omega ^2\,\sin\left(\theta _{0}+\omega \,t\right)+\frac{R^2\,\omega ^2\,{\sin\left(\theta _{0}+\omega \,t\right)}^2}{2\,\sqrt{L^2-{\left(H-R\,\cos\left(\theta _{0}+\omega \,t\right)\right)}^2}}+\frac{R\,\omega ^2\,\cos\left(\theta _{0}+\omega \,t\right)\,\left(H-R\,\cos\left(\theta _{0}+\omega \,t\right)\right)}{2\,\sqrt{L^2-{\left(H-R\,\cos\left(\theta _{0}+\omega \,t\right)\right)}^2}}+\frac{R^2\,\omega ^2\,{\sin\left(\theta _{0}+\omega \,t\right)}^2\,{\left(H-R\,\cos\left(\theta _{0}+\omega \,t\right)\right)}^2}{2\,{\left(L^2-{\left(H-R\,\cos\left(\theta _{0}+\omega \,t\right)\right)}^2\right)}^{3/2}}\right)
-    }
+    Here, $A_x$ is defined in Eq. \eqref{A:x} and $A_y$ is defined in Eq. \eqref{A:y}.
+    \begin{equation}
+        P = \sqrt{P_{x}^2 + P_{y}^2}
     \end{equation}
-    \begin{equation}\resizebox{4.00}{!}{$
+    $P_x$ is defined in Eq. \eqref{P:x} and $P_y$ is defined in Eq. \eqref{P:y}.
 
-        P_x = 
--\frac{\frac{g\,m_{c}\,\left(H-R\,\cos\left(\theta _{0}+\omega \,t\right)\right)}{2}+m_{p}\,\left(H-R\,\cos\left(\theta _{0}+\omega \,t\right)\right)\,\left(g-R\,\omega ^2\,\sin\left(\theta _{0}+\omega \,t\right)-\frac{\left(R\,\omega ^2\,\cos\left(\theta _{0}+\omega \,t\right)-\frac{R^2\,\omega ^2\,{\sin\left(\theta _{0}+\omega \,t\right)}^2\,\left(H-R\,\cos\left(\theta _{0}+\omega \,t\right)\right)}{H^2-2\,H\,R\,\cos\left(\theta _{0}+\omega \,t\right)-L^2+R^2\,{\cos\left(\theta _{0}+\omega \,t\right)}^2}\right)\,\left(H-R\,\cos\left(\theta _{0}+\omega \,t\right)\right)}{\sqrt{-H^2+2\,H\,R\,\cos\left(\theta _{0}+\omega \,t\right)+L^2-R^2\,{\cos\left(\theta _{0}+\omega \,t\right)}^2}}+\frac{R^2\,\omega ^2\,{\sin\left(\theta _{0}+\omega \,t\right)}^2\,\sqrt{L^2-{\left(H-R\,\cos\left(\theta _{0}+\omega \,t\right)\right)}^2}}{H^2-2\,H\,R\,\cos\left(\theta _{0}+\omega \,t\right)-L^2+R^2\,{\cos\left(\theta _{0}+\omega \,t\right)}^2}\right)-\frac{L^2\,m_{c}\,\left(R\,\omega ^2\,\cos\left(\theta _{0}+\omega \,t\right)-\frac{R^2\,\omega ^2\,{\sin\left(\theta _{0}+\omega \,t\right)}^2\,\left(H-R\,\cos\left(\theta _{0}+\omega \,t\right)\right)}{H^2-2\,H\,R\,\cos\left(\theta _{0}+\omega \,t\right)-L^2+R^2\,{\cos\left(\theta _{0}+\omega \,t\right)}^2}\right)}{3\,\sqrt{-H^2+2\,H\,R\,\cos\left(\theta _{0}+\omega \,t\right)+L^2-R^2\,{\cos\left(\theta _{0}+\omega \,t\right)}^2}}}{\sqrt{L^2-{\left(H-R\,\cos\left(\theta _{0}+\omega \,t\right)\right)}^2}}
-    \end{equation}
-    \begin{equation}\resizebox{4.00}{!}{$
-        P_y = 
--m_{p}\,\left(g-R\,\omega ^2\,\sin\left(\theta _{0}+\omega \,t\right)-\frac{\left(R\,\omega ^2\,\cos\left(\theta _{0}+\omega \,t\right)-\frac{R^2\,\omega ^2\,{\sin\left(\theta _{0}+\omega \,t\right)}^2\,\left(H-R\,\cos\left(\theta _{0}+\omega \,t\right)\right)}{H^2-2\,H\,R\,\cos\left(\theta _{0}+\omega \,t\right)-L^2+R^2\,{\cos\left(\theta _{0}+\omega \,t\right)}^2}\right)\,\left(H-R\,\cos\left(\theta _{0}+\omega \,t\right)\right)}{\sqrt{-H^2+2\,H\,R\,\cos\left(\theta _{0}+\omega \,t\right)+L^2-R^2\,{\cos\left(\theta _{0}+\omega \,t\right)}^2}}+\frac{R^2\,\omega ^2\,{\sin\left(\theta _{0}+\omega \,t\right)}^2\,\sqrt{L^2-{\left(H-R\,\cos\left(\theta _{0}+\omega \,t\right)\right)}^2}}{H^2-2\,H\,R\,\cos\left(\theta _{0}+\omega \,t\right)-L^2+R^2\,{\cos\left(\theta _{0}+\omega \,t\right)}^2}\right)
-    \end{equation}
+    \appendix
+    \subfile{autogen_eqs}
 
-
-\end{document}
+    \end{document}
