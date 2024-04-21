@@ -13,6 +13,9 @@
 %       it may be hard to differentiate what's a vector and what's a scalar. I have come to the 
 %       executive decision that it's better to keep track in my head and in my code, then to 
 %       Hungarian-type every variable name, which would likely decrease legibility even more.
+%       Most of the values you'd expect to be vectors are vectors anyways (typically 
+%       with an i, j, and k components defined to span R^3 to allow for the use of the cross 
+%       product).
 
 
 %% Parameter initialization 
@@ -21,7 +24,7 @@
 % aside from t, all of these parameters are constant with respect to the system's time evolution
 syms R H L m_c m_p omega t theta_0 g
 
-%% Kinetics
+%% Kinematics
 % define theta with respect to time (in radians)
 theta = omega * t + theta_0;
 
@@ -117,6 +120,9 @@ clear temp_a_G;
 
 % save a handle to the function load_params to keep it accessible after running the script
 loadParams = @load_params;
+% also save a handle to random_params to implement floating point number comparisons in the 
+%   command window
+randParams = @random_params;
 
 %% Define cases
 
@@ -143,7 +149,8 @@ case2.theta_0 = 0;
 case2.g = 9.81;
 case2.L = 8/3*case1.R;
 % This used to be 5/3, which resulted in some *interesting* graphs, as well as some divide
-%   by zero errors when the offset ere too small for some reason
+%   by zero errors when the offset are too small for some reason
+%       (I'm not manually analyzing those function to find out why)
 % Change it back if you want to see some steep force jumps and piecewise-esque behavior
 case2.H = 1/3*case1.R;
 case2.t = 0:0.0001:0.05;
@@ -165,9 +172,12 @@ function vec2 = planar_truncate(vec3)
     vec2 = vec3(1:2);
 end
 
-% Checks if two symbolic functions are equivalent 
-%   (well, really, it checks if they're functionally equivalent, or, if that fails to work, checks 
-%       if they're significantly close).
+% Checks if two symbolic expressions are equivalent 
+% Valid for expr1 and expr2 of type 'symbolic' that can be cast to a 'double' 
+%   through the use of load_params (macro-esque substitution of the symbolic variables
+%   initialized above)
+% Anything else is Undefined Behavior, but might work
+% May warn users of a sign error they have, but this behavior is not guaranteed for all inputs.
 function equal = deep_equality(expr1, expr2) 
     equal = true;
     if (length(expr1) ~= length(expr2)) 
@@ -197,7 +207,8 @@ function equal = deep_equality(expr1, expr2)
             % if analytic methods fail, simply brute force check 50 points for approximate equality
             % TODO -- add justification for tolerance and discuss acceptable failure probabilities
             % What are the odds this *and* our calculationrs are wrong?
-            equal = check_equality_brute_force(expr1(i), expr2(i), 50, 0.1); 
+            % TODO -- replace tolerance with 0.5 from histogram?
+            equal = check_equality_brute_force(expr1(i), expr2(i), 10, 0.001); 
             if (~equal) 
                 return;
             end
@@ -205,6 +216,12 @@ function equal = deep_equality(expr1, expr2)
     end
 end
 
+% Same contract applies to expr1 and expr2 here as they do in deep_equality
+% When all else fails, substitute out the variables inside the expressions with a numeric 
+%   dummy variable num times, cast the resultant expression to a double floating point 
+%   number, and compare these expressions to each other to see if they're within the tolerance 
+%   given.
+% Also warns of potential sign errors in the chance it catches them, but this is not guaranteed.
 function equal = check_equality_brute_force(expr1, expr2, num, tolerance)
     equal = true;
     for i = 1:num 
@@ -248,11 +265,13 @@ end
 % loads a struct called param defining every variable to get a numerical value out 
 %   all (useful) fields of param must be initialized to an object that can be 
 %       cast to a double
-%   t is allowed to be a vector (array), everything else must be a scalar
+%   params.t is allowed to be a vector (array), everything else must be a scalar
+%       If params.t is a vector, out is also a vector with corresponding indices to params.t
 %   g is allowed to be left uninitialized if you want it to default to 9.81 m/s^2
+% If parameters are not physically possible, or otherwise do not lead to well-defined behavior 
+%   when inputted into expr, the resultant value(s) are Undefined Behavior
 function out = load_params(expr, params) 
     syms R H L m_c m_p omega t theta_0 g
-    % TODO -- conver top terms to ratios
     assert(isfield(params, 'H'), "Parameter field property 'H' is not defined.");
     assert(isfield(params, 'R'), "Parameter field property 'R' is not defined.");
     assert(isfield(params, 'L'), "Parameter field property 'L' is not defined.");
