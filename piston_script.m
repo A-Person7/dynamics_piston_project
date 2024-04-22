@@ -174,15 +174,30 @@ case2.omega = 5000 * 2 * pi / 60;
 
 
 if (sum(options.contains("write")))
-    fobj = gen_file("eqs");
+    try 
+    fobj_fn_def = gen_file("fn_def");
 
-    append_section(fobj.fid, "Function Definitions");
-    append_equation(fobj.fid, "A_x", A_x, "A:x", true);
-    append_equation(fobj.fid, "A_y", A_y, "A:y", true);
-    append_equation(fobj.fid, "P_y", P_y, "P:y", true);
-    append_equation(fobj.fid, "P_x", P_x, "P:x", true);
+    % fid, section name, section label (replace with "" for none)
+    append_section(fobj_fn_def.fid, "Function Definitions", "appendix:definitions");
+    % fid, variable name, symbolic Right Hand side, label (can be "" for none),
+    %   and a logical/boolean value for if the equation should be scaled to fit within the 
+    %   given column
+    append_equation(fobj_fn_def.fid, "A_{\textrm{x}}", A_x, "A:x", true);
+    append_equation(fobj_fn_def.fid, "A_{\textrm{y}}", A_y, "A:y", true);
+    append_equation(fobj_fn_def.fid, "P_{\textrm{y}}", P_y, "P:y", true);
+    append_equation(fobj_fn_def.fid, "P_{\textrm{x}}", P_x, "P:x", true);
 
     clear fobj*;
+    catch ME
+        % MATLAB is weird and introduces a quasi-RAII (Resource Aquisition Is Initialization) 
+        %   destructor scheme, and then fails to innately guarantee stuff will go out of scope 
+        % Therefore, my choices are either wrap everything in one function and not define the 
+        %   symbolic expressions in the command window workspace, which I don't want, to 
+        %   declare them all as global variables, which is bad practice and I also don't want,
+        %   to pass them all into a function which would be a hassle, or to add a try-catch 
+        %   statement here as a failsafe 
+        clear fobj*;
+    end
 end
 
 
@@ -379,6 +394,11 @@ function safe_out = gen_file(name)
         '',
         '',
         '%% This document is auto-generated as a result of running the MATLAB script piston_script.m with the option write enabled.',
+        "%% Generated on " + date + ".",
+        '',
+        '',
+        '',
+        '',
         '%% It is NOT guaranteed to be (easily) human-readable.',
         '\documentclass[]{subfiles}',
         '\begin{document}'
@@ -416,8 +436,12 @@ function str = append_equation(fid, name, expr, label, scale)
 end
 
 % appends a section 
-function str = append_section(fid, name)
+function str = append_section(fid, name, label)
     str = "\section{" + name + "}";    
+
+    if (~isempty(label)) 
+        str = str + "\label{" + label + "}";
+    end
 
     fprintf(fid, "%s", str);
 end
