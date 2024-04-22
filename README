@@ -1,0 +1,19 @@
+Dynamics Piston Project 
+
+
+Compilation pre-requisites:
+    - MATLAB installed along with the addon Symbolic Toolbox 
+    - A valid LaTeX compilation engine, such as pdflatex 
+        - This should include a latexmk executable in your PATH
+
+Inside your shell, run the following commands (the dollar sign prefix just means they're shell commands):
+
+$ matlab -batch "piston_script; exit;"
+$ latexmk document.tex
+
+Depending on how you've configured your LaTeX engine, this will either ouput document.pdf or document.dvi, he final report.
+
+If you do not have a valid MATLAB license or lack a license for the Symbolic Toolbox, you can try using FOSS alternatives that accept *.m files and see if they work. To be honest, the script likely should've been done in FOSS software from the getgo, but it is what it is.
+
+Believe it or not, I'm being friendly to Windows users; these commands should probably be valid in a Windows environment, and MATLAB supports the -batch flag on Windows after 2019a or something like that. Pretty sure installing LaTeX on a Windows system adds latexmk to your PATH (after a restart, because Windows), but if it doesn't, a) that's a skill issue, and b) that's easily manually repairable by launching the GUI and instructing it to compile document.tex.
+Fair warning, MATLAB does not seem to like the usage of the -batch flag, because it's hard to find documentation on (most of what you find is on the -r flag which appears to behave identically, except might not be available for Windows users) and a few things don't behave like their documentation suggests.

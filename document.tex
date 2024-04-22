@@ -39,9 +39,11 @@
 }
 
 \begin{document}
-    \ConfName{Proceedings of the Dynamics 2024\linebreak Very Local Mechanical Engineering Congress and Exposition}
+    \ConfName{Proceedings of the Dynamics 2024 Local Mechanical Engineering Class and Exposition}
     \ConfDate{Spring, 2024} % update 
     \ConfCity{Spokane, WA}
+    % let paper 0001 refer to our previous paper we submitted
+    \PaperNo{ENSC2024-0002}
 
     \title{Piston Project}
     \SetAuthors{Lucas S. Johnston\affil{1}\JointFirstAuthor, Brendan Moskalik\affil{1}\JointFirstAuthor}
@@ -50,7 +52,7 @@
     \maketitle
 
     \begin{abstract}
-        This paper is an analysis of the forces acting in pins within a crank-piston combination given a variety of cases. It analyzes the time-evolution of the system to derive an equation relating the forces in the pins to time in general, and applies specific conditions to create graphical representations of these forces for use in design.
+        This paper is an analysis of the forces acting in pins within a crank-piston combination given a variety of cases. It analyzes the time-evolution of the system to derive an equation relating the forces in the pins to time in general, and applies specific conditions to create graphical representations of these forces for use in design. It is intended to be accompanied by a related MATLAB script \texttt{piston_script.m}, which is provided via a link to a git repository in the Appendix \ref{appendix:sources}.
     \end{abstract}
 
     \begin{nomenclature}
@@ -192,8 +194,10 @@
         v_{\,\textrm{P}}\hat{j} = \vec{v}_{\textrm{A}} + \omega_{\textrm{AP}}\hat{k}\times \vec{r}_{\,\sfrac{\textrm{P}}{\textrm{A}}}
     \end{equation}
 
-    Every variable in the above expression is a `known' quantity expressible purely in terms of constant parameters and time, with the exception of $v_{\,\textrm{P}}$ and $\omega_{\textrm{AP}}$. These scalar quantities are, in essence, two degrees of freedom now being constrained within a vector equation. This vector equation can be broken into two linearly dependent equations, which suggest $v_{\,\textrm{P}}$ and $\omega_{\textrm{AP}}$ are both well-defined. We can manipulate this expression to pull known quantities off to one side of the equation, and factor a matrix in Mat($\mathbb{R}$)$^{2\times 2}$. Since we will be dealing with matrices, it is more illustrative to write vectors as column vectors.
+    Every variable in the above expression is a `known' quantity expressible purely in terms of constant parameters and time, with the exception of $v_{\,\textrm{P}}$ and $\omega_{\textrm{AP}}$. These scalar quantities are, in essence, two degrees of freedom now being constrained within a vector equation. This vector equation can be broken into two linearly dependent equations, which suggest $v_{\,\textrm{P}}$ and $\omega_{\textrm{AP}}$ are both well-defined. It is left as an exercise to the reader to prove the following.%We can manipulate this expression to pull known quantities off to one side of the equation, and factor a matrix in Mat($\mathbb{R}$)$^{2\times 2}$. Since we will be dealing with matrices, it is more illustrative to write vectors as column vectors.
     % TODO -- resume work here
+
+    \subfile{autogen_vel}
 
 
 
@@ -212,5 +216,9 @@
 
 
     \subfile{autogen_fn_def}
+
+    \section{Sources}\label{appendix:sources} 
+
+    This document was written with \LaTeX\ and is designed to be compilled by a valid \LaTeX\ engine such as \texttt{pdflatex}. The git repository used to generate this document can be found online on GitHub at \href{https://github.com/A-Person7/dynamics_piston_project}{https://github.com/A-Person7/dynamics_piston_project}. MATLAB's symbolic toolbox was used to solve a lot of the linear algebra shown throughout this document, as well as to generate equations. These were implemented in the MATLAB script file \texttt{piston_script.m}. Compilation instructions for the final document are provided in the plain-text file \texttt{README}.
 
     \end{document}
