@@ -162,8 +162,8 @@ case1.theta_0 = 0;
 case1.g = 9.81;
 case1.L = 3/2*case1.R;
 case1.H = 0*case1.R;
-case1.t = 0:0.001:0.25;
-case1.omega = 1000;
+case1.t = 0:0.0001:0.05;
+case1.omega = 1000 * 2 * pi / 60;
 
 case2.R = 0.075;
 case2.m_c = 0.3;
