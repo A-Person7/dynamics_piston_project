@@ -116,7 +116,7 @@
         }
     \end{table}
 
-    The crank rotates about a fixed axis O. The piston is constrained to move up and down in the direction of the $\hat{j}$ elementary vector as drawn. All motion is constrained to the plane spanned by $\hat{i}$ and $\hat{j}$.
+    The crank rotates about a fixed axis O. The piston is constrained to move up and down in the direction of the $\hat{\jmath}$ elementary vector as drawn. All motion is constrained to the plane spanned by $\hat{\imath}$ and $\hat{\jmath}$.
 
 
     \section{Solution Derivation}
@@ -133,7 +133,7 @@
     This allows us to construct the position vector of A. Let the origin be set at fixed point O.
 
     \begin{equation} 
-        \vec{r}_{\textrm{A}} = R\cdot\left(\cos{\left(\theta\right)}\hat{i} + \sin{\left(\theta\right)}\hat{j}\right)
+        \vec{r}_{\textrm{A}} = R\cdot\left(\cos{\left(\theta\right)}\hat{\imath} + \sin{\left(\theta\right)}\hat{\jmath}\right)
     \end{equation}
 
 
@@ -144,7 +144,7 @@
     \end{equation}
 
 
-    Here $\hat{k}$ is a unit vector that, together with $\hat{i}$ and $\hat{j}$, spans $\mathbb{R}^3$. This allows the cross product to be defined. $\hat{k}$ is normal to both $\hat{i}$ and $\hat{j}$, and form the basis for a Cartesian representation of vectors in three-space in a Right Handed coordinate system. The angular velocity $\omega$ is given to us in a direction pointing in the $+\hat{k}$ direction.
+    Here $\hat{k}$ is a unit vector that, together with $\hat{\imath}$ and $\hat{\jmath}$, spans $\mathbb{R}^3$. This allows the cross product to be defined. $\hat{k}$ is normal to both $\hat{\imath}$ and $\hat{\j}$, and form the basis for a Cartesian representation of vectors in three-space in a Right Handed coordinate system. The angular velocity $\omega$ is given to us in a direction pointing in the $+\hat{k}$ direction.
 
     Let's now find the angular velocity of the rod to determine its acceleration. Since the rod has a constant length $L$, we can apply the following.
 
@@ -162,7 +162,7 @@
         \hat{i}\cdot \left(\vec{r}_{\,\sfrac{\textrm{P}}{\textrm{A}}} + \vec{r}_{\textrm{A}}\right) = \hat{i} \cdot \left(\vec{r}_{\,\textrm{P}}\right)
     \end{equation}
     \begin{equation}
-        \hat{i}\cdot \vec{r}_{\,\sfrac{\textrm{P}}{\textrm{A}}} = \hat{i} \cdot \vec{r}_{\,\textrm{P}} - \hat{i} \cdot\vec{r}_{\textrm{A}} 
+        \hat{i}\cdot \vec{r}_{\,\sfrac{\textrm{P}}{\textrm{A}}} = \hat{\imath} \cdot \vec{r}_{\,\textrm{P}} - \hat{\imath} \cdot\vec{r}_{\textrm{A}} 
     \end{equation}
     \begin{equation}
         \hat{i}\cdot \vec{r}_{\,\sfrac{\textrm{P}}{\textrm{A}}} = H - R\cdot\cos{\left(\theta\right)}
@@ -171,27 +171,27 @@
     Applying the constraint that the distance from point A to point P is $L$, we get the following.
 
     \begin{equation} 
-        L^2 = \left(\vec{r}_{\,\sfrac{\textrm{P}}{\textrm{A}}} \cdot\hat{i} \right)^2+ \left(\vec{r}_{\,\sfrac{\textrm{P}}{\textrm{A}}} \cdot\hat{j}\right)^2
+        L^2 = \left(\vec{r}_{\,\sfrac{\textrm{P}}{\textrm{A}}} \cdot\hat{\imath} \right)^2+ \left(\vec{r}_{\,\sfrac{\textrm{P}}{\textrm{A}}} \cdot\hat{\jmath}\right)^2
     \end{equation}
 
     Since the vertical component of $\vec{r}_{\,\sfrac{\textrm{P}}{\textrm{A}}}$ is positive as drawn in Fig \ref{fig:diagram}, we use the positive root.
     \begin{equation} 
-        \vec{r}_{\,\sfrac{\textrm{P}}{\textrm{A}}} \cdot\hat{j} = \sqrt{L^2 - \left(\vec{r}_{\,\sfrac{\textrm{P}}{\textrm{A}}} \cdot\hat{i} \right)^2}
+        \vec{r}_{\,\sfrac{\textrm{P}}{\textrm{A}}} \cdot\hat{\jmath} = \sqrt{L^2 - \left(\vec{r}_{\,\sfrac{\textrm{P}}{\textrm{A}}} \cdot\hat{\imath} \right)^2}
     \end{equation}
     \begin{equation} 
-        \vec{r}_{\,\sfrac{\textrm{P}}{\textrm{A}}} \cdot\hat{j} = \sqrt{L^2 - \left(H - R\cdot\cos{\left(\theta\right)}\right)^2}
+        \vec{r}_{\,\sfrac{\textrm{P}}{\textrm{A}}} \cdot\hat{\jmath} = \sqrt{L^2 - \left(H - R\cdot\cos{\left(\theta\right)}\right)^2}
     \end{equation}
 
     $\vec{r}_{\,\sfrac{\textrm{P}}{\textrm{A}}}$ is now well-defined.
 
     \begin{equation} 
-        \vec{r}_{\,\sfrac{\textrm{P}}{\textrm{A}}} = \left(H - R\cdot\cos{\left(\theta\right)}\right)\hat{i} + \left(\sqrt{L^2 - \left(H - R\cdot\cos{\left(\theta\right)}\right)^2}\right)\hat{j}
+        \vec{r}_{\,\sfrac{\textrm{P}}{\textrm{A}}} = \left(H - R\cdot\cos{\left(\theta\right)}\right)\hat{\imath} + \left(\sqrt{L^2 - \left(H - R\cdot\cos{\left(\theta\right)}\right)^2}\right)\hat{\jmath}
     \end{equation}
     
-    We can now use the fact that $\vec{v}_{\,\textrm{P}}$ is constrained to purely vertical movement. Let $v_{\,\textrm{P}} = \vec{v}_{\,\textrm{P}} \cdot \hat{j}$. 
+    We can now use the fact that $\vec{v}_{\,\textrm{P}}$ is constrained to purely vertical movement. Let $v_{\,\textrm{P}} = \vec{v}_{\,\textrm{P}} \cdot \hat{\jmath}$. 
 
     \begin{equation} 
-        v_{\,\textrm{P}}\hat{j} = \vec{v}_{\textrm{A}} + \omega_{\textrm{AP}}\hat{k}\times \vec{r}_{\,\sfrac{\textrm{P}}{\textrm{A}}}
+        v_{\,\textrm{P}}\hat{\jmath} = \vec{v}_{\textrm{A}} + \omega_{\textrm{AP}}\hat{k}\times \vec{r}_{\,\sfrac{\textrm{P}}{\textrm{A}}}
     \end{equation}
 
     Every variable in the above expression is a `known' quantity expressible purely in terms of constant parameters and time, with the exception of $v_{\,\textrm{P}}$ and $\omega_{\textrm{AP}}$. These scalar quantities are, in essence, two degrees of freedom now being constrained within a vector equation. This vector equation can be broken into two linearly dependent equations, which suggest $v_{\,\textrm{P}}$ and $\omega_{\textrm{AP}}$ are both well-defined. It is left as an exercise to the reader to prove the following.%We can manipulate this expression to pull known quantities off to one side of the equation, and factor a matrix in Mat($\mathbb{R}$)$^{2\times 2}$. Since we will be dealing with matrices, it is more illustrative to write vectors as column vectors.
@@ -213,6 +213,36 @@
 
     \appendix
     \section{Cases}\label{appendix:cases}
+	  \begin{table}[H]
+        \caption[Table]{Cases to consider (Given)}\label{tab:givenCases}
+        \centering{
+            \begin{tabular}{llr}
+            \toprule
+            Case & L/R  & H/R \\
+            \midrule
+                1 & \sfrac{3}{2} & 0 \\
+                2 & \sfrac{8}{3} & \sfrac{1}{3} \\
+                3 & 4 & \sfrac{5}{3} \\
+            \bottomrule
+            \end{tabular}
+        }
+    \end{table}
+
+	Since we know the radius of all these cases to be 0.075 m we can compute values for L and H. Plugging those in:
+\begin{table}[H]
+        \caption[Table]{Cases to consider (Absolute)}\label{tab:absCases}
+        \centering{
+            \begin{tabular}{llr}
+            \toprule
+            Case & L (m)  & H (m) \\
+            \midrule
+                1 & 0.1124 & 0 \\
+                2 & 0.2 & 0.025 \\
+                3 & 0.3 & 0.125 \\
+            \bottomrule
+            \end{tabular}
+        }
+    \end{table}
 
 
     \subfile{autogen_fn_def}
