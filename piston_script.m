@@ -181,7 +181,7 @@ omega_strs = ["1,000 rpm", "2,200 rpm", "5,000 rpm"];
 % TODO -- sanity check even more?
 
 
-
+%% Autogeneration of *.tex files
 if (sum(options.contains("write")))
     % MATLAB is weird and introduces a quasi-RAII (Resource Aquisition Is Initialization) 
     %   destructor scheme, and then fails to innately guarantee stuff will go out of scope 
@@ -207,23 +207,63 @@ if (sum(options.contains("write")))
         append_equation(fobj_vel.fid, "v_{\,\textrm{P}}", v_P, "v:P", true);
         append_equation(fobj_vel.fid, "\omega_{\textrm{AP}}", omega_AP, "omega:AP", false);
 
+        % Graphs!
         fobj_graphs = gen_file("graphs");
   
         append_section(fobj_graphs.fid, "Graphs", "appendix:graphs");
+        append_text(fobj_graphs.fid, "Note that the following graphs are generated for an " + ...
+            "initial angle $\theta_0 = 0$ radians.");
 
         default_legend = ["Case 1", "Case 2", "Case 3"];
         default_colors = ["red","blue","black"];
 
+        append_subsection(fobj_graphs.fid, "Piston Velocity", "appendix:piston_vel");
+        for i = 1:length(omega_values)
+            append_graph(fobj_graphs.fid, ...
+                bulk_gen_plot(v_P, cases, omega_values(i), 10^-3), ...
+                default_colors, default_legend, ...
+                "Piston velocity over time for " + omega_strs(i), "graph:v_P_omega" + i, ...
+                "ylabel={Velocity ($\sfrac{\textrm{m}}{\textrm{s}}$)},xlabel={time (ms)},legend pos = south east");
+        end
+
+        append_subsection(fobj_graphs.fid, "Piston Acceleration", "appendix:piston_accel");
+        for i = 1:length(omega_values)
+            append_graph(fobj_graphs.fid, ...
+                bulk_gen_plot(a_P, cases, omega_values(i), 10^-3), ...
+                default_colors, default_legend, ...
+                "Piston acceleration over time for " + omega_strs(i), "graph:a_P_omega" + i, ...
+                "ylabel={Acceleration ($\sfrac{\textrm{m}}{\textrm{s}^2}$)},xlabel={time (ms)},legend pos = south east,scaled ticks=false");
+            % scaled ticks = false prevents the * 10^n appearing at the top of the graph, but does 
+            %   seem to limit the number of tick marks on the y-axis for the piston accleration vs time 
+            %   graph at 5,000 rpm
+        end
+
+        append_subsection(fobj_graphs.fid, "Connecting Rod Acceleration", "appendix:accel");
+        for i = 1:length(omega_values)
+            append_graph(fobj_graphs.fid, ...
+                bulk_gen_plot(a_G(1), cases, omega_values(i), 10^-3), ...
+                default_colors, default_legend, ...
+                "Connecting rod center of gravity vertical acceleration over time for " + omega_strs(i), "graph:a_Gx_omega" + i, ...
+                "ylabel={Acceleration ($\sfrac{\textrm{m}}{\textrm{s}^2}$)},xlabel={time (ms)}");
+
+            append_graph(fobj_graphs.fid, ...
+                bulk_gen_plot(a_G(2), cases, omega_values(i), 10^-3), ...
+                default_colors, default_legend, ...
+                "Connecting rod center of gravity horizontal acceleration over time for " + omega_strs(i), "graph:a_Gy_omega" + i, ...
+                "ylabel={Acceleration ($\sfrac{\textrm{m}}{\textrm{s}^2}$)},xlabel={time (ms)},legend pos = south east");
+        end
+
+        append_subsection(fobj_graphs.fid, "Pin Forces", "appendix:accel");
         for i = 1:length(omega_values)
             % (fid, plots, plot_opts, legends, fig_caption, fig_label, graph_options)
             append_graph(fobj_graphs.fid, ...
-                bulk_gen_plot(A, cases, omega_values(1), 10^-3), ...
+                bulk_gen_plot(A, cases, omega_values(i), 10^-3), ...
                 default_colors, default_legend, ...
                 "Shear force at A over time for " + omega_strs(i), "graph:A_omega" + i, ...
                 "ylabel={Force (N)},xlabel={time (ms)}");
 
             append_graph(fobj_graphs.fid, ...
-                bulk_gen_plot(P, cases, omega_values(1), 10^-3), ...
+                bulk_gen_plot(P, cases, omega_values(i), 10^-3), ...
                 default_colors, default_legend, ...
                 "Shear force at P over time for " + omega_strs(i), "graph:P_omega" + i, ...
                 "ylabel={Force (N)},xlabel={time (ms)}");
@@ -487,6 +527,21 @@ function append_section(fid, name, label)
     fprintf(fid, "%s", str);
 end
 
+% appends a subsection 
+function append_subsection(fid, name, label)
+    str = "\subsection{" + name + "}";    
+
+    if (~isempty(label)) 
+        str = str + "\label{" + label + "}";
+    end
+
+    fprintf(fid, "%s", str);
+end
+
+function append_text(fid, str) 
+    fprintf(fid, "%s", str);
+end
+
 function append_graph(fid, plots, plot_opts, legends, fig_caption, fig_label, graph_options)
 
     % writing to a string like this is probably slow, but it is what it is 
@@ -552,11 +607,14 @@ function p = combine_params(case_obj, omega)
     % Generate this many points
     % TURN THIS DOWN TO SPEED UP COMPILATION FOR TESTING OTHER THINGS, THEN TURN BACK UP FOR 
     %   FINAL COMPILATION
-    % NUM_PTS = 10000;
-    NUM_PTS = 100;
+    NUM_PTS = 200;
+    % 100 actually does a very good job
+    % NUM_PTS = 100;
 
     max_time = 2*pi / omega;
 
+    % this is probably off by one, but if we take the limit case as NUM_PTS -> \infty, that goes 
+    %   away, and we want to have a large number of NUM_PTS, therefore, it's fine
     p.t = 0:(max_time/NUM_PTS):max_time;
 end
 
