@@ -38,6 +38,13 @@
 	pdfsubject = {Solution for the Dynamics Piston Project},
 }
 
+% Default pgfplots settings to using the newest version and adding a grid
+\pgfplotsset{
+    compat = newest,
+    grid = both,
+}
+
+
 \begin{document}
     \ConfName{Proceedings of the Dynamics 2024 Local Mechanical Engineering Class and Exposition}
     \ConfDate{Spring, 2024} % update 
@@ -144,7 +151,7 @@
     \end{equation}
 
 
-    Here $\hat{k}$ is a unit vector that, together with $\hat{\imath}$ and $\hat{\jmath}$, spans $\mathbb{R}^3$. This allows the cross product to be defined. $\hat{k}$ is normal to both $\hat{\imath}$ and $\hat{\j}$, and form the basis for a Cartesian representation of vectors in three-space in a Right Handed coordinate system. The angular velocity $\omega$ is given to us in a direction pointing in the $+\hat{k}$ direction.
+    Here $\hat{k}$ is a unit vector that, together with $\hat{\imath}$ and $\hat{\jmath}$, spans $\mathbb{R}^3$. This allows the cross product to be defined. $\hat{k}$ is normal to both $\hat{\imath}$ and $\hat{\jmath}$, and form the basis for a Cartesian representation of vectors in three-space in a Right Handed coordinate system. The angular velocity $\omega$ is given to us in a direction pointing in the $+\hat{k}$ direction.
 
     Let's now find the angular velocity of the rod to determine its acceleration. Since the rod has a constant length $L$, we can apply the following.
 
@@ -194,7 +201,7 @@
         v_{\,\textrm{P}}\hat{\jmath} = \vec{v}_{\textrm{A}} + \omega_{\textrm{AP}}\hat{k}\times \vec{r}_{\,\sfrac{\textrm{P}}{\textrm{A}}}
     \end{equation}
 
-    Every variable in the above expression is a `known' quantity expressible purely in terms of constant parameters and time, with the exception of $v_{\,\textrm{P}}$ and $\omega_{\textrm{AP}}$. These scalar quantities are, in essence, two degrees of freedom now being constrained within a vector equation. This vector equation can be broken into two linearly dependent equations, which suggest $v_{\,\textrm{P}}$ and $\omega_{\textrm{AP}}$ are both well-defined. It is left as an exercise to the reader to prove the following.%We can manipulate this expression to pull known quantities off to one side of the equation, and factor a matrix in Mat($\mathbb{R}$)$^{2\times 2}$. Since we will be dealing with matrices, it is more illustrative to write vectors as column vectors.
+    Every variable in the above expression is a `known' quantity expressible purely in terms of constant parameters and time, with the exception of $v_{\,\textrm{P}}$ and $\omega_{\textrm{AP}}$. These scalar quantities are, in essence, two degrees of freedom now being constrained within a vector equation. This vector equation can be broken into two linearly dependent equations, which suggest $v_{\,\textrm{P}}$ and $\omega_{\textrm{AP}}$ are both well-defined. It is left as an exercise to the reader to prove the following\footnote{This algebra is solved within the accompanying script \texttt{piston_script.m}, which shares the same nomenclature as defined within this document. It may be helpful to reference this script to understand the results.}.%We can manipulate this expression to pull known quantities off to one side of the equation, and factor a matrix in Mat($\mathbb{R}$)$^{2\times 2}$. Since we will be dealing with matrices, it is more illustrative to write vectors as column vectors.
     % TODO -- resume work here
 
     \subfile{autogen_vel}
@@ -247,8 +254,11 @@
 
     \subfile{autogen_fn_def}
 
+    \subfile{autogen_graphs}
+
     \section{Sources}\label{appendix:sources} 
 
-    This document was written with \LaTeX\ and is designed to be compilled by a valid \LaTeX\ engine such as \texttt{pdflatex}. The git repository used to generate this document can be found online on GitHub at \href{https://github.com/A-Person7/dynamics_piston_project}{https://github.com/A-Person7/dynamics_piston_project}. MATLAB's symbolic toolbox was used to solve a lot of the linear algebra shown throughout this document, as well as to generate equations. These were implemented in the MATLAB script file \texttt{piston_script.m}. Compilation instructions for the final document are provided in the plain-text file \texttt{README}.
+    This document was written with \LaTeX\ and is designed to be compilled by a valid \LaTeX\ engine such as \texttt{pdfTeX}. The git repository used to generate this document can be found online on GitHub at \href{https://github.com/A-Person7/dynamics_piston_project}{https://github.com/A-Person7/dynamics_piston_project}. MATLAB's symbolic toolbox was used to solve a lot of the linear algebra shown throughout this document, as well as to generate equations. These were implemented in the MATLAB script file \texttt{piston_script.m}. Compilation instructions for the final document are provided in the plain-text file \texttt{README}.
+
 
     \end{document}

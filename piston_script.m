@@ -141,47 +141,44 @@ A_x = m_c * temp_a_G(1) - P_x;
 
 clear temp_a_G;
 
-% save a handle to the function load_params to keep it accessible after running the script
+
+% Magnitude 
+A = sqrt(A_x^2 + A_y^2);
+P = sqrt(P_x^2 + P_y^2);
+
+
+% Save handles to convenient functions for use in the command window
 loadParams = @load_params;
-% also save a handle to random_params to implement floating point number comparisons in the 
-%   command window
 randParams = @random_params;
+combineParams = @combine_params;
+
 
 %% Define cases
 
-% TODO -- seperate case parameters from angular velocities, have a case-template with constants,
-%   make a function that combines a case with an angular velocity to yield a full parameter 
-%   (auto-generate t values for an appropriate range)
-% Also want a function that writes to data files in a pgfplots readable format for display 
-%   purposes
 
-case1.R = 0.075;
-case1.m_c = 0.3;
-case1.m_p = 0.4;
-case1.theta_0 = 0;
-case1.g = 9.81;
-case1.L = 3/2*case1.R;
-case1.H = 0*case1.R;
-case1.t = 0:0.0001:0.05;
-case1.omega = 1000 * 2 * pi / 60;
+case1.L_by_R = 3/2;
+case1.H_by_R = 0;
 
-case2.R = 0.075;
-case2.m_c = 0.3;
-case2.m_p = 0.4;
-case2.theta_0 = 0;
-case2.g = 9.81;
-case2.L = 8/3*case1.R;
+case2.L_by_R = 8/3;
 % This used to be 5/3, which resulted in some *interesting* graphs, as well as some divide
 %   by zero errors when the offset are too small for some reason
 %       (I'm not manually analyzing those function to find out why)
 % Change it back if you want to see some steep force jumps and piecewise-esque behavior
-case2.H = 1/3*case1.R;
-case2.t = 0:0.0001:0.05;
-case2.omega = 5000 * 2 * pi / 60;
+case2.H_by_R = 1/3;
 
-% plot(case1.t, loadParams(A_x, case1))
+case3.L_by_R = 4;
+case3.H_by_R = 5/3;
 
-% TODO -- sanity check even more
+cases = [case1, case2, case3];
+
+
+% Inside the array are the given angular velocities in rpm, convert to rad/s as the 
+%   God Lord intended
+omega_values = [1000, 2200, 5000] * 2 * pi / 60;
+omega_strs = ["1,000 rpm", "2,200 rpm", "5,000 rpm"];
+
+
+% TODO -- sanity check even more?
 
 
 
@@ -210,14 +207,36 @@ if (sum(options.contains("write")))
         append_equation(fobj_vel.fid, "v_{\,\textrm{P}}", v_P, "v:P", true);
         append_equation(fobj_vel.fid, "\omega_{\textrm{AP}}", omega_AP, "omega:AP", false);
 
+        fobj_graphs = gen_file("graphs");
+  
+        append_section(fobj_graphs.fid, "Graphs", "appendix:graphs");
+
+        default_legend = ["Case 1", "Case 2", "Case 3"];
+        default_colors = ["red","blue","black"];
+
+        for i = 1:length(omega_values)
+            % (fid, plots, plot_opts, legends, fig_caption, fig_label, graph_options)
+            append_graph(fobj_graphs.fid, ...
+                bulk_gen_plot(A, cases, omega_values(1), 10^-3), ...
+                default_colors, default_legend, ...
+                "Shear force at A over time for " + omega_strs(i), "graph:A_omega" + i, ...
+                "ylabel={Force (N)},xlabel={time (ms)}");
+
+            append_graph(fobj_graphs.fid, ...
+                bulk_gen_plot(P, cases, omega_values(1), 10^-3), ...
+                default_colors, default_legend, ...
+                "Shear force at P over time for " + omega_strs(i), "graph:P_omega" + i, ...
+                "ylabel={Force (N)},xlabel={time (ms)}");
+        end
+
         clear fobj*;
     catch ME
         clear fobj*;
+        % Definitely didn't forget this earlier and wonder why some of the code in the 
+        %   try statement wasn't executing when I didn't get any warnings/errors...
+        rethrow(ME);
     end
 end
-
-
-
 
 
 
@@ -424,7 +443,7 @@ function safe_out = gen_file(name)
 end
 
 % appends a valid LaTeX equation to a file
-function str = append_equation(fid, name, expr, label, scale)
+function append_equation(fid, name, expr, label, scale)
     if (~isempty(label))
         label = "\label{" + label + "}";
     end
@@ -458,7 +477,7 @@ function str = append_equation(fid, name, expr, label, scale)
 end
 
 % appends a section 
-function str = append_section(fid, name, label)
+function append_section(fid, name, label)
     str = "\section{" + name + "}";    
 
     if (~isempty(label)) 
@@ -466,6 +485,79 @@ function str = append_section(fid, name, label)
     end
 
     fprintf(fid, "%s", str);
+end
+
+function append_graph(fid, plots, plot_opts, legends, fig_caption, fig_label, graph_options)
+
+    % writing to a string like this is probably slow, but it is what it is 
+    str = "\begin{figure}[H]\begin{tikzpicture}\begin{axis}[" + graph_options + "]";
+
+    for i = 1:length(plots) 
+        str = str + "\addplot[" + plot_opts(i) + "] coordinates {" + plots(i) + "};";
+    end
+
+    if (length(legends) > 0) 
+        str = str + "\legend{";
+        for i = 1:length(legends)
+            str = str + legends(i) + ",";
+        end
+        str = str + "};";
+    end
+
+    str = str + "\end{axis}\end{tikzpicture}";
+
+    if (strlength(fig_caption) > 0) 
+        str = str + "\caption{" + fig_caption+ "}";
+        if (strlength(fig_label) > 0) 
+            str = str + "\label{" + fig_label + "}";
+        end
+    end
+
+    str = str + "\end{figure}";
+
+    fprintf(fid, "%s", str);
+end
+
+function str = gen_plot_coords(x, y) 
+    str = "";
+    for i = 1:length(x)
+        str = str + "(" + x(i) + "," + y(i) + ") ";
+    end
+end
+
+% time conversion is a scale factor on time in case you wanted to plot the x-axis in milliseconds
+function strs = bulk_gen_plot(expr, cases, omega, time_conversion) 
+    strs = string(ones(1,length(cases)));
+    for i = 1:length(cases) 
+        p = combine_params(cases(i), omega);
+        strs(i) = gen_plot_coords(p.t / time_conversion, load_params(expr, p));
+    end
+end
+
+% Takes a case (object so as not to collide with the switch-case keyword) and an angular velocity,
+%   returns a valid params 'struct' with a timespan of one rotation of 2*pi for theta
+function p = combine_params(case_obj, omega) 
+    p.R = 0.075;
+    p.m_c = 0.3;
+    p.m_p = 0.4;
+    % Because we really don't care what the initial angle is
+    p.theta_0 = 0;
+    p.g = 9.81;
+
+    p.L = p.R * case_obj.L_by_R;
+    p.H = p.R * case_obj.H_by_R;
+
+    p.omega = omega;
+
+    % Generate this many points
+    % TURN THIS DOWN TO SPEED UP COMPILATION FOR TESTING OTHER THINGS, THEN TURN BACK UP FOR 
+    %   FINAL COMPILATION
+    % NUM_PTS = 10000;
+    NUM_PTS = 100;
+
+    max_time = 2*pi / omega;
+
+    p.t = 0:(max_time/NUM_PTS):max_time;
 end
 
 
