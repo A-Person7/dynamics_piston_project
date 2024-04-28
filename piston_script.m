@@ -193,19 +193,28 @@ if (sum(options.contains("write")))
     try 
         fobj_fn_def = gen_file("fn_def");
 
+        % Pass redundant arguments by value now to make a cleaner, more easily modifiable 
+        %   function call
+        % make_presentable(expr_in, L,H, R, theta_0, omega, t) 
+        displayable = @(expr) make_presentable(expr, L,H,R,theta_0,omega,t);
+
+
         % fid, section name, section label (replace with "" for none)
         append_section(fobj_fn_def.fid, "Function Definitions", "appendix:definitions");
         % fid, variable name, symbolic Right Hand side, label (can be "" for none),
         %   and a logical/boolean value for if the equation should be scaled to fit within the 
         %   given column
-        append_equation(fobj_fn_def.fid, "A_{\textrm{x}}", A_x, "A:x", true);
-        append_equation(fobj_fn_def.fid, "A_{\textrm{y}}", A_y, "A:y", true);
-        append_equation(fobj_fn_def.fid, "P_{\textrm{y}}", P_y, "P:y", true);
-        append_equation(fobj_fn_def.fid, "P_{\textrm{x}}", P_x, "P:x", true);
+        append_equation(fobj_fn_def.fid, "A_{\textrm{x}}", displayable(A_x), "A:x", true);
+        append_equation(fobj_fn_def.fid, "A_{\textrm{y}}", displayable(A_y), "A:y", true);
+        append_equation(fobj_fn_def.fid, "P_{\textrm{y}}", displayable(P_y), "P:y", true);
+        append_equation(fobj_fn_def.fid, "P_{\textrm{x}}", displayable(P_x), "P:x", true);
 
         fobj_vel = gen_file("vel");
-        append_equation(fobj_vel.fid, "v_{\,\textrm{P}}", v_P, "v:P", true);
-        append_equation(fobj_vel.fid, "\omega_{\textrm{AP}}", omega_AP, "omega:AP", false);
+        % append_equation(fobj_vel.fid, "v_{\,\textrm{P}}", v_P, "v:P", true);
+        append_equation(fobj_vel.fid, "v_{\,\textrm{P}}", displayable(v_P), "v:P", true);
+        % quick_combine(expr_in, H, R, theta) 
+        % append_equation(fobj_vel.fid, "v_{\,\textrm{P}}", quick_combine(v_P, H, R, theta), "v:P", true);
+        append_equation(fobj_vel.fid, "\omega_{\textrm{AP}}", displayable(omega_AP), "omega:AP", false);
 
         % Graphs!
         fobj_graphs = gen_file("graphs");
@@ -244,13 +253,13 @@ if (sum(options.contains("write")))
                 bulk_gen_plot(a_G(1), cases, omega_values(i), 10^-3), ...
                 default_colors, default_legend, ...
                 "Connecting rod center of gravity vertical acceleration over time for " + omega_strs(i), "graph:a_Gx_omega" + i, ...
-                "ylabel={Acceleration ($\sfrac{\textrm{m}}{\textrm{s}^2}$)},xlabel={time (ms)}");
+                "ylabel={Acceleration ($\sfrac{\textrm{m}}{\textrm{s}^2}$)},xlabel={time (ms)},scaled ticks=false");
 
             append_graph(fobj_graphs.fid, ...
                 bulk_gen_plot(a_G(2), cases, omega_values(i), 10^-3), ...
                 default_colors, default_legend, ...
                 "Connecting rod center of gravity horizontal acceleration over time for " + omega_strs(i), "graph:a_Gy_omega" + i, ...
-                "ylabel={Acceleration ($\sfrac{\textrm{m}}{\textrm{s}^2}$)},xlabel={time (ms)},legend pos = south east");
+                "ylabel={Acceleration ($\sfrac{\textrm{m}}{\textrm{s}^2}$)},xlabel={time (ms)},legend pos = south east,scaled ticks=false");
         end
 
         append_subsection(fobj_graphs.fid, "Pin Forces", "appendix:accel");
@@ -260,13 +269,13 @@ if (sum(options.contains("write")))
                 bulk_gen_plot(A, cases, omega_values(i), 10^-3), ...
                 default_colors, default_legend, ...
                 "Shear force at A over time for " + omega_strs(i), "graph:A_omega" + i, ...
-                "ylabel={Force (N)},xlabel={time (ms)}");
+                "ylabel={Force (N)},xlabel={time (ms)},scaled ticks=false");
 
             append_graph(fobj_graphs.fid, ...
                 bulk_gen_plot(P, cases, omega_values(i), 10^-3), ...
                 default_colors, default_legend, ...
                 "Shear force at P over time for " + omega_strs(i), "graph:P_omega" + i, ...
-                "ylabel={Force (N)},xlabel={time (ms)}");
+                "ylabel={Force (N)},xlabel={time (ms)},scaled ticks=false");
         end
 
         clear fobj*;
@@ -607,7 +616,8 @@ function p = combine_params(case_obj, omega)
     % Generate this many points
     % TURN THIS DOWN TO SPEED UP COMPILATION FOR TESTING OTHER THINGS, THEN TURN BACK UP FOR 
     %   FINAL COMPILATION
-    NUM_PTS = 200;
+    % NUM_PTS = 200;
+    NUM_PTS = 20;
     % 100 actually does a very good job
     % NUM_PTS = 100;
 
@@ -616,6 +626,49 @@ function p = combine_params(case_obj, omega)
     % this is probably off by one, but if we take the limit case as NUM_PTS -> \infty, that goes 
     %   away, and we want to have a large number of NUM_PTS, therefore, it's fine
     p.t = 0:(max_time/NUM_PTS):max_time;
+end
+
+% Takes in a Symbolic expression, returns said symbolic expression with simplificats made 
+%   for clarity when displayed.
+% Guaranteed to return an equivalent symbolic expression that's probably in a more presentable,
+%   human-readable form.
+%   - The guarantee is only on an equivalent expression output (assuming real inputs for variables,
+%       complex output of the expression via load_params IS well defined because loading random 
+%       parameters to test for equality via brute force can lead to complex outputs. However, 
+%       equivalence is NOT guaranteed for complex inputs or for negative L, so sqrt(L^2) can be 
+%       displayed as L
+% Replaces -H^2 + 2HR cos(theta) - R^2 * cos(theta) with -(H - Rcos(theta))^2
+%   for display purposes
+% H, R, and theta are symbolic variables, and are intended to be the same variables as defined in the 
+%   `main' workspace
+function expr_out = make_presentable(expr_in, L,H, R,theta_0, omega, t) 
+    syms theta
+
+    % substitute what used to be this;
+    expr_sub_out = [-H^2 +  L^2 + 2*H*R*cos(theta_0 + omega*t) - R^2 *cos(theta_0 + omega*t)^2,...
+        H^2 - 2*H*R*cos(theta_0 + omega*t) - L^2 + R^2 * cos(theta_0 + omega*t)^2];
+    % with this:
+    % INDICES MUST MATCH
+    expr_sub_in = [L^2 -(H-R*cos(theta))^2, -L^2 -(H-R*cos(theta))^2];
+
+    expr_out = expr_in;
+
+    for i = 1:length(expr_sub_out) 
+        assert(deep_equality(expr_sub_out(i), expr_sub_in(i)), "Substitutional expressions " ...
+            + "are not equivalent.");
+        expr_out = subs(expr_out, expr_sub_out(i), expr_sub_in(i));
+    end
+
+    % MATLAB is perfectly fine accepting a string for the assumptions, but only if it's a single one 
+    % You need to use character vectors and a cell array to add multiple conditions in one line...
+    % One has to wonder what goes on in the minds of MATLAB's developers
+    assume(L, {'real', 'positive'});
+    expr_out = simplify(expr_out, 'Steps', 10);
+    expr_out = combine(expr_out);
+
+    expr_out = simplify(expr_out, 'Steps', 10);
+
+    assert(deep_equality(expr_in, expr_out), "Simplification failed to yield overall equivalent expression.");
 end
 
 
