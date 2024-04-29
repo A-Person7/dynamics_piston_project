@@ -47,6 +47,19 @@ end
 % aside from t, all of these parameters are constant with respect to the system's time evolution
 syms R H L m_c m_p omega t theta_0 g
 
+
+% Pass redundant arguments by value now to make a cleaner, more easily modifiable 
+%   function call
+% make_presentable(expr_in, L,H, R, theta,theta_0, omega, t) 
+% Of course, MATLAB is weird, and requires theta to exist in the workspace when this function 
+%   is called, even though it should be passed by value here, but I digress.
+% Basically a pseudo-simplification function based on a finite list of recognized 
+%   simplifications the make_presentable function is told.
+% This does not reduce the size of expressions to a reasonable size, but does help a little
+displayable = @(expr) make_presentable(expr, L,H,R,theta,theta_0,omega,t);
+
+
+
 %% Kinematics
 % define theta with respect to time (in radians)
 theta = omega * t + theta_0;
@@ -88,6 +101,11 @@ omega_AP = temp(1);
 v_P = temp(2);
 clear temp;
 
+% % at this point, this is the closest thing to simplification that can be done
+v_P = displayable(v_P);
+omega_AP = displayable(omega_AP);
+
+
 
 assert(deep_equality(v_P*[0,1,0], diff(r_P, t)), "Velocity of point P is not what's expected.");
 assert(deep_equality(v_A + omega_AP*cross([0,0,1],r_GA), diff(r_G, t)), "Velocity of point G is not what's expected.");
@@ -103,17 +121,18 @@ alpha_AP = temp(1);
 a_P = temp(2);
 clear temp;
 
-
-func_random_params = @() random_params();
-func_check_equality_brute_force = @(expr1, expr2, num, tolerance) check_equality_brute_force(expr1, expr2, num, tolerance);
-func_load_params = @(expr, params) load_params(expr, params);
+a_P = displayable(a_P);
+alpha_AP = displayable(alpha_AP);
 
 assert(deep_equality(a_P, diff(v_P, t)), "Acceleration of point P is not what's expected.");
 
 
 a_G = a_A + alpha_AP*cross([0,0,1], r_GA) - omega_AP^2 * r_GA;
+a_G = displayable(a_G);
+
 
 assert(deep_equality(a_G, diff(r_G, t, 2)), "Acceleration of point G is not what's expected.");
+
 
 
 %% Kinetics
@@ -124,8 +143,10 @@ I_A = I_G + (L/2)^2*m_c;
 %   nicer expressions, probably
 % also can't just directly type out diff every time because MATLAB doesn't like you indexing 
 %   expressions, just variables for some reason
-temp_a_G = diff(r_G, t, 2);
-% temp_a_G = a_G;
+%temp_a_G = diff(r_G, t, 2);
+% a_G is `nicer' than diff(r_G, t, 2) is right now, so use that instead, but keep as a 
+%   variable that can be easily change should better simplification become available
+temp_a_G = a_G;
 
 % get P_y from FBD about the piston
 %   NOTE -- P_y points in the -i direction on this FBD, despite pointing in the +i dir on 
@@ -139,6 +160,11 @@ P_x = (-I_A * alpha_AP - m_c * g * (r_PA(1))/2 + P_y * r_PA(1))/(r_PA(2));
 % from sum of forces of the crank
 A_x = m_c * temp_a_G(1) - P_x;
 
+P_x = displayable(P_x);
+A_x = displayable(A_x);
+P_y = displayable(P_y);
+A_y = displayable(A_y);
+
 clear temp_a_G;
 
 
@@ -146,12 +172,14 @@ clear temp_a_G;
 A = sqrt(A_x^2 + A_y^2);
 P = sqrt(P_x^2 + P_y^2);
 
+%% Function handles
 
 % Save handles to convenient functions for use in the command window
 loadParams = @load_params;
 randParams = @random_params;
 combineParams = @combine_params;
-
+deepEquality = @deep_equality;
+bruteForce = @check_equality_brute_force;
 
 %% Define cases
 
@@ -178,7 +206,108 @@ omega_values = [1000, 2200, 5000] * 2 * pi / 60;
 omega_strs = ["1,000 rpm", "2,200 rpm", "5,000 rpm"];
 
 
-% TODO -- sanity check even more?
+
+%% Display 'simplification' variables
+
+% NOTE -- any changes to the above code must be propogated here
+% Also, statements here are not sanity checked, hence the need for this to be a mirror of the 
+%   above code.
+% Also, the function (handle) displayable no longer works here, since theta is re-initialized,
+%   and syms variables behave weirdly when passed by value after their original value is 
+%   destroyed.
+
+%% Kinematics
+
+% % Let h = H-Rcos(theta), l = sqrt(L^2 - h^2)
+syms h l theta
+
+
+% position of A with respect to O
+%   define r in R^3 so we can take the cross product without adding on extra dimensions later
+disp_r_A = R*[cos(theta), sin(theta), 0];
+
+% use the Pythagorean theorem to determine the vertical component of r_PA
+% r_PA = [H-R*cos(theta), sqrt(L^2 - (H-R*cos(theta))^2),0];
+disp_r_PA = [h,l,0];
+disp_r_AP = -disp_r_PA;
+
+disp_r_GA = 0.5 * disp_r_PA;
+disp_r_P = disp_r_A + disp_r_PA;
+disp_r_G = disp_r_A + disp_r_GA;
+
+% rearrange r_G = r_P + r_GP
+disp_r_GP = disp_r_G - disp_r_P;
+
+
+% linear algebra solves every problem if you know what you're doing 
+
+% this expression is dealing with a lot of MATLAB's poor design choices
+%   for example, use planar_truncate to reduce R^3 vectors into the plane (just keeps the first two
+%       elements),
+%   .' is actually the transpose operator in MATLAB, ' is NOT and picks up a conjugate term 
+% use \ instead of ^(-1) to allow MATLAB to optimize this and produce warnings for non-unique 
+%   equations
+temp = [planar_truncate(cross([0,0,1],disp_r_PA)).',[0;-1]] \ (planar_truncate(-cross(omega*[0,0,1],disp_r_A)).');
+% temp = [planar_truncate(cross([0,0,1],r_PA)).',[0;-1]]^(-1)* (planar_truncate(-cross(omega*[0,0,1],r_A)).');
+% MATLAB isn't clever enough to let you immediately assign these values
+disp_omega_AP = temp(1);
+disp_v_P = temp(2);
+clear temp;
+
+% % at this point, this is the closest thing to simplification that can be done
+% disp_v_P = displayable(disp_v_P);
+% disp_omega_AP = displayable(disp_omega_AP);
+
+disp_a_A = -omega^2*disp_r_A;
+
+
+% temp = [planar_truncate(cross([0,0,1],r_PA)).',[0;-1]]^(-1)*(planar_truncate(omega_AP^2*r_PA - a_A).');
+temp = [planar_truncate(cross([0,0,1],disp_r_PA)).',[0;-1]] \ (planar_truncate(disp_omega_AP^2*disp_r_PA - disp_a_A).');
+disp_alpha_AP = temp(1);
+disp_a_P = temp(2);
+clear temp;
+
+% disp_a_P = displayable(disp_a_P);
+% disp_alpha_AP = displayable(disp_alpha_AP);
+
+disp_a_G = disp_a_A + disp_alpha_AP*cross([0,0,1], disp_r_GA) - disp_omega_AP^2 * disp_r_GA;
+% disp_a_G = displayable(disp_a_G);
+
+
+
+%% Kinetics
+% these are nice enough to leave as-is
+I_G = 1/12 * m_c*L^2;
+I_A = I_G + (L/2)^2*m_c;
+
+% this is probably in a simpler form than a_G is right now, use this to get 
+%   nicer expressions, probably
+% also can't just directly type out diff every time because MATLAB doesn't like you indexing 
+%   expressions, just variables for some reason
+%temp_a_G = diff(r_G, t, 2);
+% a_G is `nicer' than diff(r_G, t, 2) is right now, so use that instead, but keep as a 
+%   variable that can be easily change should better simplification become available
+temp_a_G = disp_a_G;
+
+% get P_y from FBD about the piston
+%   NOTE -- P_y points in the -i direction on this FBD, despite pointing in the +i dir on 
+%       the FBD of the rod
+disp_P_y = -m_p*(disp_a_P + g);
+% get A_y from FBD of the rod
+disp_A_y = m_c * temp_a_G(2) - disp_P_y;
+
+% from sum of moments on the crank in the k dir about point A 
+disp_P_x = (-I_A * disp_alpha_AP - m_c * g * (disp_r_PA(1))/2 + disp_P_y * disp_r_PA(1))/(disp_r_PA(2));
+% from sum of forces of the crank
+disp_A_x = m_c * temp_a_G(1) - disp_P_x;
+
+% disp_P_x = displayable(disp_P_x);
+% disp_A_x = displayable(disp_A_x);
+% disp_P_y = displayable(disp_P_y);
+% disp_A_y = displayable(disp_A_y);
+
+clear temp_a_G;
+
 
 
 %% Autogeneration of *.tex files
@@ -193,28 +322,37 @@ if (sum(options.contains("write")))
     try 
         fobj_fn_def = gen_file("fn_def");
 
-        % Pass redundant arguments by value now to make a cleaner, more easily modifiable 
-        %   function call
-        % make_presentable(expr_in, L,H, R, theta_0, omega, t) 
-        displayable = @(expr) make_presentable(expr, L,H,R,theta_0,omega,t);
-
-
         % fid, section name, section label (replace with "" for none)
         append_section(fobj_fn_def.fid, "Function Definitions", "appendix:definitions");
         % fid, variable name, symbolic Right Hand side, label (can be "" for none),
         %   and a logical/boolean value for if the equation should be scaled to fit within the 
         %   given column
-        append_equation(fobj_fn_def.fid, "A_{\textrm{x}}", displayable(A_x), "A:x", true);
-        append_equation(fobj_fn_def.fid, "A_{\textrm{y}}", displayable(A_y), "A:y", true);
-        append_equation(fobj_fn_def.fid, "P_{\textrm{y}}", displayable(P_y), "P:y", true);
-        append_equation(fobj_fn_def.fid, "P_{\textrm{x}}", displayable(P_x), "P:x", true);
+
+        append_text(fobj_fn_def.fid, "The following equations are the resultant equations"...
+            + " from this document expressed purely in terms of the system's constant parameters"...
+            + " and time. The following expressions are mostly simplified, but may still be "...
+            + "unweildy both due to their inherent complexity and , hence the more easily understood expressions used throughout the body"...
+            + " of the document. Nevertheless, it is useful to see that these expressions can "...
+            + "be reduced to given values and time, and serve as a reference for re-constructing"...
+            + " graphs if need be.");
+
+        append_equation(fobj_fn_def.fid, "v_{\,\textrm{P}}", v_P, "fn_defv:P", true);
+        append_equation(fobj_fn_def.fid, "\omega_{\textrm{AP}}", omega_AP, "fn_def:omega:AP", false);
+        append_equation(fobj_fn_def.fid, "a_{\,\textrm{P}}", a_P, "fn_def:a:P", true);
+        append_equation(fobj_fn_def.fid, "\alpha_{\textrm{AP}}", alpha_AP, "fn_def:alpha:AP", true);
+        append_equation(fobj_fn_def.fid, "A_{\textrm{x}}", displayable(A_x), "fn_def:A:x", true);
+        append_equation(fobj_fn_def.fid, "A_{\textrm{y}}", displayable(A_y), "fn_def:A:y", true);
+        append_equation(fobj_fn_def.fid, "P_{\textrm{y}}", displayable(P_y), "fn_def:P:y", true);
+        append_equation(fobj_fn_def.fid, "P_{\textrm{x}}", displayable(P_x), "fn_def:P:x", true);
+
 
         fobj_vel = gen_file("vel");
-        % append_equation(fobj_vel.fid, "v_{\,\textrm{P}}", v_P, "v:P", true);
-        append_equation(fobj_vel.fid, "v_{\,\textrm{P}}", displayable(v_P), "v:P", true);
-        % quick_combine(expr_in, H, R, theta) 
-        % append_equation(fobj_vel.fid, "v_{\,\textrm{P}}", quick_combine(v_P, H, R, theta), "v:P", true);
-        append_equation(fobj_vel.fid, "\omega_{\textrm{AP}}", displayable(omega_AP), "omega:AP", false);
+        append_equation(fobj_vel.fid, "v_{\,\textrm{P}}", disp_v_P, "v:P", false);
+        append_equation(fobj_vel.fid, "\omega_{\textrm{AP}}", disp_omega_AP, "omega:AP", false);
+
+        fobj_acc = gen_file("acc");
+        append_equation(fobj_acc.fid, "a_{\,\textrm{P}}", disp_a_P, "a:P", true);
+        append_equation(fobj_acc.fid, "\alpha_{\textrm{AP}}", disp_alpha_AP, "alpha:AP", false);
 
         % Graphs!
         fobj_graphs = gen_file("graphs");
@@ -355,7 +493,7 @@ function equal = check_equality_brute_force(expr1, expr2, num, tolerance)
     for i = 1:num 
         p = random_params();
         value1 = load_params(expr1, p);
-        value2 = load_params(expr1, p);
+        value2 = load_params(expr2, p);
 
         % complex values are only a problem if they're not equal, luckily
         % assert(isreal(value1) && isreal(value2), "Expression evaluation yields complex outputs.");
@@ -399,13 +537,14 @@ end
 % If parameters are not physically possible, or otherwise do not lead to well-defined behavior 
 %   when inputted into expr, the resultant value(s) are Undefined Behavior
 function out = load_params(expr, params) 
-    syms R H L m_c m_p omega t theta_0 g
+    syms R H L m_c m_p omega t theta_0 g theta l h
     assert(isfield(params, 'H'), "Parameter field property 'H' is not defined.");
     assert(isfield(params, 'R'), "Parameter field property 'R' is not defined.");
     assert(isfield(params, 'L'), "Parameter field property 'L' is not defined.");
 
     assert(isfield(params, 'm_c'), "Parameter field property 'm_c' is not defined.");
     assert(isfield(params, 'm_p'), "Parameter field property 'm_p' is not defined.");
+
     assert(isfield(params, 'omega'), "Parameter field property 'omega' is not defined.");
 
     if(~isfield(params, 'theta_0'))
@@ -431,8 +570,29 @@ function out = load_params(expr, params)
     expr = subs(expr, "t", params.t);
     expr = subs(expr, "g", params.g);
 
+    if (has(expr, theta))
+        warning("The following expression contains theta expicitly, rather than constructing "...
+            + "theta from constant parameters and time:    " + string(expr) +"       You probably "...
+            + "called load_params on a display-only variable")
+        expr = subs(expr, "theta", params.theta_0 + params.omega*params.t);
+    end
+    if (has(expr, l))
+        warning("The following expression contains l expicitly, rather than constructing "...
+            + "l from constant parameters and time:    " + string(expr) +"       You probably "...
+            + "called load_params on a display-only variable")
+        expr = subs(expr, "l", params.H - params.R * cos(params.theta_0 + params.omega*params.t));
+    end
+    if (has(expr, h))
+        warning("The following expression contains h expicitly, rather than constructing "...
+            + "h from constant parameters and time:    " + string(expr) +"       You probably "...
+            + "called load_params on a display-only variable")
+        expr = subs(expr, "h", ...
+            sqrt(params.L^2 - (params.H - params.R * cos(params.theta_0 + params.omega*params.t))^2));
+    end
+
     % cast result from symbolic expression to double
     % at this point, every variable in expr ought to have been substituded out with a numeric form 
+    
     out = double(expr);
 end
 
@@ -617,9 +777,10 @@ function p = combine_params(case_obj, omega)
     % TURN THIS DOWN TO SPEED UP COMPILATION FOR TESTING OTHER THINGS, THEN TURN BACK UP FOR 
     %   FINAL COMPILATION
     % NUM_PTS = 200;
-    NUM_PTS = 20;
+    % NUM_PTS = 200;
     % 100 actually does a very good job
     % NUM_PTS = 100;
+     NUM_PTS = 50;
 
     max_time = 2*pi / omega;
 
@@ -639,23 +800,36 @@ end
 %       displayed as L
 % Replaces -H^2 + 2HR cos(theta) - R^2 * cos(theta) with -(H - Rcos(theta))^2
 %   for display purposes
-% H, R, and theta are symbolic variables, and are intended to be the same variables as defined in the 
+% H, R, etc. are symbolic variables, and are intended to be the same variables as defined in the 
 %   `main' workspace
-function expr_out = make_presentable(expr_in, L,H, R,theta_0, omega, t) 
-    syms theta
+function expr_out = make_presentable(expr_in, L,H, R,theta,theta_0, omega, t) 
 
-    % substitute what used to be this;
-    expr_sub_out = [-H^2 +  L^2 + 2*H*R*cos(theta_0 + omega*t) - R^2 *cos(theta_0 + omega*t)^2,...
-        H^2 - 2*H*R*cos(theta_0 + omega*t) - L^2 + R^2 * cos(theta_0 + omega*t)^2];
+    % substitute what used to be this:
+    expr_sub_out = [-H^2+L^2 + 2*H*R*cos(theta_0 + omega*t) - R^2 *cos(theta_0 + omega*t)^2,...
+        H^2 - 2*H*R*cos(theta_0 + omega*t) - L^2 + R^2 * cos(theta_0 + omega*t)^2,...
+        H^2*cos(theta_0 + omega*t) - 2*H*R*cos(theta_0 + omega*t)^2 - L^2*cos(theta_0 + omega*t) + R^2 * cos(theta_0 + omega*t)^3];
     % with this:
     % INDICES MUST MATCH
-    expr_sub_in = [L^2 -(H-R*cos(theta))^2, -L^2 -(H-R*cos(theta))^2];
+    % NOTE -- MATLAB is very stupid, and will take your adding spaces to this expression below 
+    %   as having multiple entries in it
+    % Somehow, the same does not apply to expr_sub_out above?
+    
+    theta = theta_0 + omega*t;
+
+    expr_sub_in = [L^2-(H-R*cos(theta))^2, -L^2+(H-R*cos(theta))^2,cos(theta)*(-L^2+(H-R*cos(theta))^2)];
+
+    assert(length(expr_sub_in) == length(expr_sub_out), "MATLAB bullshit detected: "...
+        + "some implicit array entries are being added to expr_sub_in again.");
 
     expr_out = expr_in;
 
     for i = 1:length(expr_sub_out) 
-        assert(deep_equality(expr_sub_out(i), expr_sub_in(i)), "Substitutional expressions " ...
-            + "are not equivalent.");
+        % expr_sub_out(i) 
+        % expr_sub_in(i)
+
+        assert(deep_equality(expr_sub_out(i), expr_sub_in(i)), "Substitutional expression " ...
+            + i + " are not equivalent.");
+
         expr_out = subs(expr_out, expr_sub_out(i), expr_sub_in(i));
     end
 
@@ -665,8 +839,10 @@ function expr_out = make_presentable(expr_in, L,H, R,theta_0, omega, t)
     assume(L, {'real', 'positive'});
     expr_out = simplify(expr_out, 'Steps', 10);
     expr_out = combine(expr_out);
+    % expr_out = simplifyFraction(expr_out);
+    % expr_out = combine(expr_out);
 
-    expr_out = simplify(expr_out, 'Steps', 10);
+    % expr_out = simplify(expr_out, 'Steps', 10);
 
     assert(deep_equality(expr_in, expr_out), "Simplification failed to yield overall equivalent expression.");
 end

@@ -44,6 +44,12 @@
     grid = both,
 }
 
+\usetikzlibrary{arrows.meta}
+\usetikzlibrary{positioning}
+% for variables
+\usetikzlibrary{math}
+% for adding numbers to points
+\usetikzlibrary{calc}
 
 \begin{document}
     \ConfName{Proceedings of the Dynamics 2024 Local Mechanical Engineering Class and Exposition}
@@ -92,6 +98,8 @@
         \entry{O}{Point O value}
         \entry{A}{Point A value}
         \entry{P}{Point P value}
+        \entry{G}{Connecting rod center of gravity value}
+        \entry{$\,\sfrac{\textrm{b}}{\textrm{a}}$}{Value from a to b, where a and b are any points}
         \entry{p}{Piston value}
         \entry{c}{Connecting rod AP value}
         \entry{$AP$}{Connecting rod AP value}
@@ -160,19 +168,19 @@
         \vec{v}_{\,\textrm{P}} = \vec{v}_{\textrm{A}} + \omega_{\textrm{AP}}\hat{k}\times \vec{r}_{\,\sfrac{\textrm{P}}{\textrm{A}}}
     \end{equation}
 
-    To find $\vec{r}_{\,\sfrac{\textrm{P}}{\textrm{A}}}$, we can build P's position from O.
+    Note that $\alpha_{\textrm{AP}}$ is defined that a positive quantity means counter-clockwise rotation. To find $\vec{r}_{\,\sfrac{\textrm{P}}{\textrm{A}}}$, we can build P's position from O.
 
     \begin{equation}
         \vec{r}_{\,\sfrac{\textrm{P}}{\textrm{A}}} + \vec{r}_{\textrm{A}} = \vec{r}_{\,\textrm{P}}
     \end{equation}
     \begin{equation}
-        \hat{i}\cdot \left(\vec{r}_{\,\sfrac{\textrm{P}}{\textrm{A}}} + \vec{r}_{\textrm{A}}\right) = \hat{i} \cdot \left(\vec{r}_{\,\textrm{P}}\right)
+        \hat{\imath}\cdot \left(\vec{r}_{\,\sfrac{\textrm{P}}{\textrm{A}}} + \vec{r}_{\textrm{A}}\right) = \hat{\imath} \cdot \left(\vec{r}_{\,\textrm{P}}\right)
     \end{equation}
     \begin{equation}
-        \hat{i}\cdot \vec{r}_{\,\sfrac{\textrm{P}}{\textrm{A}}} = \hat{\imath} \cdot \vec{r}_{\,\textrm{P}} - \hat{\imath} \cdot\vec{r}_{\textrm{A}} 
+        \hat{\imath}\cdot \vec{r}_{\,\sfrac{\textrm{P}}{\textrm{A}}} = \hat{\imath} \cdot \vec{r}_{\,\textrm{P}} - \hat{\imath} \cdot\vec{r}_{\textrm{A}} 
     \end{equation}
     \begin{equation}
-        \hat{i}\cdot \vec{r}_{\,\sfrac{\textrm{P}}{\textrm{A}}} = H - R\cdot\cos{\left(\theta\right)}
+        \hat{\imath}\cdot \vec{r}_{\,\sfrac{\textrm{P}}{\textrm{A}}} = H - R\cdot\cos{\left(\theta\right)}
     \end{equation}
 
     Applying the constraint that the distance from point A to point P is $L$, we get the following.
@@ -194,29 +202,176 @@
     \begin{equation} 
         \vec{r}_{\,\sfrac{\textrm{P}}{\textrm{A}}} = \left(H - R\cdot\cos{\left(\theta\right)}\right)\hat{\imath} + \left(\sqrt{L^2 - \left(H - R\cdot\cos{\left(\theta\right)}\right)^2}\right)\hat{\jmath}
     \end{equation}
+
+    To simplify resultant expressions, we will introduce intermediate variables $h$ and $l$ as follows. The full version of expressions shown below expressed purely in terms of constant parameters and time may be references in Appendix \ref{appendix:definitions}.
+
+    \begin{equation} 
+        h = \vec{r}_{\,\sfrac{\textrm{P}}{\textrm{A}}} \cdot \hat{\imath}
+    \end{equation}
+    \begin{equation} 
+        l = \vec{r}_{\,\sfrac{\textrm{P}}{\textrm{A}}} \cdot \hat{\jmath}
+    \end{equation}
+
     
     We can now use the fact that $\vec{v}_{\,\textrm{P}}$ is constrained to purely vertical movement. Let $v_{\,\textrm{P}} = \vec{v}_{\,\textrm{P}} \cdot \hat{\jmath}$. 
 
-    \begin{equation} 
+    \begin{equation}\label{eq:velocity_system}
         v_{\,\textrm{P}}\hat{\jmath} = \vec{v}_{\textrm{A}} + \omega_{\textrm{AP}}\hat{k}\times \vec{r}_{\,\sfrac{\textrm{P}}{\textrm{A}}}
     \end{equation}
 
-    Every variable in the above expression is a `known' quantity expressible purely in terms of constant parameters and time, with the exception of $v_{\,\textrm{P}}$ and $\omega_{\textrm{AP}}$. These scalar quantities are, in essence, two degrees of freedom now being constrained within a vector equation. This vector equation can be broken into two linearly dependent equations, which suggest $v_{\,\textrm{P}}$ and $\omega_{\textrm{AP}}$ are both well-defined. It is left as an exercise to the reader to prove the following\footnote{This algebra is solved within the accompanying script \texttt{piston_script.m}, which shares the same nomenclature as defined within this document. It may be helpful to reference this script to understand the results.}.%We can manipulate this expression to pull known quantities off to one side of the equation, and factor a matrix in Mat($\mathbb{R}$)$^{2\times 2}$. Since we will be dealing with matrices, it is more illustrative to write vectors as column vectors.
-    % TODO -- resume work here
+    Every variable in the above expression is a `known' quantity expressible purely in terms of constant parameters and time, with the exception of $v_{\,\textrm{P}}$ and $\omega_{\textrm{AP}}$. These scalar quantities are, in essence, two degrees of freedom now being constrained within a vector equation. This vector equation can be broken into two linearly dependent equations, which suggest $v_{\,\textrm{P}}$ and $\omega_{\textrm{AP}}$ are both well-defined. Linear algebra is now sufficient to prove the following\footnote{The overall process consists of re-organizing the system of equations to put linear combinations of what we hope to solve on the right hand side, and everything else on the left hand side. Factoring out a two-by-two matrix over the reals suggests taking a matrix inverse to solve for our two unknowns in terms of what we already know. This algebra is solved within the accompanying script \texttt{piston_script.m}, which shares the same nomenclature as defined within this document. It may be helpful to reference this script to understand the results.}.
 
     \subfile{autogen_vel}
 
+    What we are truly interested in are the accelerations throughout the system. Let's begin solving for these. Since point A rotates about O with a constant angular veloctity constrained to uniform circular motion, its acceleration is described as follows.
 
 
-    Let $A$ represent the magnitude of the forces on the pin at A and let $P$ represent the magnitude of the forces on the pin at P. We can derive the following expressions. Using the property of the magnitude of vectors, we can derive the following in terms of equations defined in Appendix \ref{appendix:definitions}.
+    \begin{equation}
+        \vec{a}_{\textrm{A}} = - \omega^2\cdot\vec{r}_{\textrm{A}}
+    \end{equation}
+
+    The acceleration of the piston can be described as follows.
+
+
+    \begin{equation}
+        \vec{a}_{\textrm{p}} = \vec{a}_{\textrm{A}} + \alpha_{\textrm{AP}}\hat{k} \times \vec{r}_{\,\sfrac{\textrm{P}}{\textrm{A}}} + \omega_{\textrm{AP}}\hat{k}\times \left(\omega_{\textrm{AP}}\hat{k}\times \vec{r}_{\,\sfrac{\textrm{P}}{\textrm{A}}}\right)
+    \end{equation}
+
+    Note that $\alpha_{\textrm{AP}}$ is defined such that a positive value denotes counter-clockwise acceleration. Since all motion in this system is confined to the plane, the equation can be reduced.
+
+    \begin{equation}\label{eq:piston_accel}
+        \vec{a}_{\textrm{p}} = \vec{a}_{\textrm{A}} + \alpha_{\textrm{AP}}\hat{k} \times \vec{r}_{\,\sfrac{\textrm{P}}{\textrm{A}}} - \omega_{\textrm{AP}}^2 \vec{r}_{\,\sfrac{\textrm{P}}{\textrm{A}}}
+    \end{equation}
+
+    The piston's motion being constrained to the $\hat{\jmath}$ direction also means its acceleration is constrained to that direction. Let $a_{\textrm{p}} = \vec{a}_{\textrm{p}}\cdot\hat{\jmath}$.
+
+    \begin{equation}
+         a_{\textrm{p}}\hat{\jmath}= \vec{a}_{\textrm{A}} + \alpha_{\textrm{AP}}\hat{k} \times \vec{r}_{\,\sfrac{\textrm{P}}{\textrm{A}}} - \omega_{\textrm{AP}}^2 \vec{r}_{\,\sfrac{\textrm{P}}{\textrm{A}}}
+    \end{equation}
+
+    With the exception of $a_{\textrm{p}}$ and $\alpha_{\textrm{AP}}$, every term in this expression has already been explicitly described in terms of the system's constant parameters and $t$. These two scalar quantities can be considered two `unknowns' in two systems of equations if one looks at the horizontal and vertical terms of this vector equation as two seperate scalar equation. Using similiar linear algebra techniques as applied to Eq. \eqref{eq:velocity_system}, we can demonstrate the following.
+
+    \subfile{autogen_acc}
+
+    We are told the connecting rod AP is a uniform cylinder. This means its center of gravity lies halfway along its length.
+
+    \begin{equation}
+        \vec{r}_{\,\sfrac{\textrm{G}}{\textrm{A}}} = \frac{1}{2}\cdot \vec{r}_{\,\sfrac{\textrm{P}}{\textrm{A}}}
+    \end{equation}
+
+    The translational acceleration of G can be found similiarly to Eq. \eqref{eq:piston_accel}. Recall that rigid bodies have one angular acceleration and velocity throughout.
+
+    \begin{equation}
+        \vec{a}_{\textrm{G}} = \vec{a}_{\textrm{A}} + \alpha_{\textrm{AP}}\hat{k} \times \vec{r}_{\,\sfrac{\textrm{G}}{\textrm{A}}} - \omega_{\textrm{AP}}^2 \vec{r}_{\,\sfrac{\textrm{G}}{\textrm{A}}}
+    \end{equation}
+
+    We now have enough acceleration information to begin considering free body diagrams. There are two bodies of interest here, the connecting rod and the piston.
+
+
+
+    % defines variables within tikz environments 
+    \tikzmath{
+        \forceoffset = 0.10;
+    }
+
+    \begin{figure}[H]
+        \centering
+        \begin{tikzpicture}
+            % Rod
+            \coordinate (A) at (-1.5/1.75,-3/1.75);
+            \coordinate (P) at (1.5/1.75,3/1.75);
+            \draw (A)node[left]{A} -- (P)node[left]{P};
+            % Center of Gravity
+            \filldraw[fill=white](0,0) circle(0.1);
+            \draw [fill=black] (0,0) -- ++(0.1,0) arc(0:90:0.1) -- cycle;
+            \draw [fill=black] (0,0) -- ++(-0.1,0) arc(180:270:0.1) -- cycle;
+            \node [right = 2.0pt](0,0) {G};
+
+
+            % Forces
+            \draw [-Stealth, violet] (0,-0.1 - \forceoffset) -- (0,-1) node[below] {$m_{\textrm{c}} g$};
+            \draw [-Stealth, violet] ($ (A) + (\forceoffset,0)$) -- ($(A) + (1 + \forceoffset,0)$) node[below] {$A_x$};
+            \draw [-Stealth, violet] ($ (A) + (0,\forceoffset)$) -- ($(A) + (0,1 + \forceoffset)$) node[above] {$A_y$};
+            \draw [-Stealth, violet] ($ (P) + (\forceoffset,0)$) -- ($(P) + (1 + \forceoffset,0)$) node[below] {$P_x$};
+            \draw [-Stealth, violet] ($ (P) + (0,\forceoffset)$) -- ($(P) + (0,1 + \forceoffset)$) node[above] {$P_y$};
+
+            % coordinate system
+            \coordinate (a) at (4,0);
+            \coordinate (b) at (5,0);
+            \coordinate (c) at (4,1);
+            \draw (a) -- (b)node[right]{$\hat{\imath}$};
+            \draw (a) -- (c)node[above]{$\hat{\jmath}$};
+            \draw [-Stealth] ($(a) + (0.1,0.1) + (0.55cm,0)$) arc(0:90:0.55cm) node[midway,above] {$\hat{k}$};
+
+        \end{tikzpicture}
+        \caption{Free Body Diagram of the Connecting Rod}
+    \end{figure}
+    \begin{figure}[H]
+        \centering
+        \begin{tikzpicture}
+            % Rectangle
+            \coordinate (A) at (-1.5,-1);
+            \coordinate (B) at (-1.5,1);
+            \coordinate (C) at (1.5,1);
+            \coordinate (D) at (1.5,-1);
+            \draw (A) -- (B);
+            \draw (B) -- (C);
+            \draw (C) -- (D);
+            \draw (D) -- (A);
+            % Center of Gravity
+            \filldraw[fill=white](0,0) circle(0.1);
+            \draw [fill=black] (0,0) -- ++(0.1,0) arc(0:90:0.1) -- cycle;
+            \draw [fill=black] (0,0) -- ++(-0.1,0) arc(180:270:0.1) -- cycle;
+            \node [right = 2.0pt](0,0) {P};
+
+
+            % Forces
+            \draw [-Stealth, violet] (0,-0.1 - \forceoffset) -- (0,-1.5) node[right] {$P_y$};
+            \draw [-Stealth, violet] (-0.1 - \forceoffset,0) -- (-1.75,0) node[left] {$P_x$};
+            \draw [-Stealth, violet] (0,-1.5-\forceoffset) -- (0,-2) node[below] {$m_{\textrm{p}} g$};
+            \draw [Stealth-Stealth, violet] (1.5+\forceoffset,0) -- (2.5,0) node[right] {$N$};
+
+            % coordinate system
+            \coordinate (a) at (4,0);
+            \coordinate (b) at (5,0);
+            \coordinate (c) at (4,1);
+            \draw (a) -- (b)node[right]{$\hat{\imath}$};
+            \draw (a) -- (c)node[above]{$\hat{\jmath}$};
+
+        \end{tikzpicture}
+        \caption{Free Body Diagram of the Piston}
+    \end{figure}
+
+    Here, $N$ represents the normal force on the piston block exerted by its track simplified from a distributed force to a single point force. Let's sum forces on the piston block in the $\hat{\jmath}$ direction. Note that point P is coincident with the piston block's center of gravity/mass.
+
+    \begin{equation}
+        \hat{\jmath}\cdot \sum{\vec{F}} = \hat{j}\cdot m_{\,\textrm{P}}\vec{a}_{\,\textrm{P}}
+    \end{equation}
+    \begin{equation}
+        -P_y - m_{\,\textrm{P}}g = m_{\,\textrm{P}}a_{\,\textrm{P}}
+    \end{equation}
+
+    From this relation, we can derive our first pin force.
+
+    \begin{equation}
+        P_y = -m_{\,\textrm{P}}a_{\,\textrm{P}} -  m_{\,\textrm{P}}g
+    \end{equation}
+
+    Now that we know the values of one of our forces, summing forces and moments about the rod AP is sufficient to fully define the remaining forces\footnote{It is easy to be mislead by summing forces across the rod AP and moments about point A and point P that we \textit{only} need to use the free body diagram for the rod. However, these relations alone are not well-posed, and need one force to be specified beforehand to yield useful results.}.
+
+    \begin{equation}
+        \sum{\vec{F}} = m_{\,\textrm{AP}}\vec{a}_{\,\textrm{G}}
+    \end{equation}
+
+
+
+    $A$ represents the magnitude of the forces on the pin at A and $P$ represents the magnitude of the forces on the pin at P. We can derive the following expressions. Using the property of the magnitude of vectors, we can derive the following.
     \begin{equation}
         A = \sqrt{A_{\textrm{x}}^2 + A_{\textrm{y}}^2}
     \end{equation}
-    Here, $A_{\textrm{x}}$ is defined in Eq. \eqref{A:x} and $A_{\textrm{y}}$ is defined in Eq. \eqref{A:y}.
     \begin{equation}
         P = \sqrt{P_{\textrm{x}}^2 + P_{\textrm{y}^2}}
     \end{equation}
-    $P_{\textrm{x}}$ is defined in Eq. \eqref{P:x} and $P_{\textrm{y}}$ is defined in Eq. \eqref{P:y}.
 
     \appendix
     \section{Cases}\label{appendix:cases}
