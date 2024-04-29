@@ -373,6 +373,17 @@
         P = \sqrt{P_{\textrm{x}}^2 + P_{\textrm{y}^2}}
     \end{equation}
 
+	\section{Discussion of results}
+	One very clear verification we can do is check that they cycle is actually repeatable. This means that the value and slope at the end of the cylce and begining of the cylce should be equivalent. This is something you can easily see in our graphs holds true, which is good. 
+
+
+	As can be seen in our graphs increasing $\omega$ to higher speeds the forces felt in the pins are higher. This is true across all the cases. it also makes sense as higher values of $\omega$ should reult in higher accelerations. Higher accelerations we know will result in higer forces on the pins.
+
+	Case 2 tended to have the smallest forces of the three cases. This indicated that $\sfrac{L}{R}$ and $\sfrac{H}{R}$ have opposite effects on the system. As in case 1, Low values for both of these resulted in a higher max force at A, wheras in case 3, we have a more even value of the max forces spread between A and P.
+
+	The next steps for this project to make it more realistic would start with modeling the force on the piston from the gas. It would not be to complicated to get this from the ideal gas laws, and would make the model much more useful. This allows to actually see how the engine actually would perform. In the project we just testing a few values for $\omega$ 4 but we have no idea if those are correct or useful running speeds for the engine. A force pushing the piston down would be able to give us more accurate values for this. The step after that would be to add a load to the output, allowing the calulation to be even more accurate for this usecase. An engine also does not have constant power output, so if we model the piston force we can incorperate that into our model and account for the fact that in a four stroke engine, only 1 out of every 4 piston moves actually is pushing down on it. Both the exaust and intake are almost free spinning other than friction, but there also would be the compression stage to account for. Adding the force to the piston would allow us to model this loss in power as its a force working against the engines motion. Then if we have mutiple cylinders we can see how much losses we need for the engine to keep running. 
+
+
     \appendix
     \section{Cases}\label{appendix:cases}
 	  \begin{table}[H]
