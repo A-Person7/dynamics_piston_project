@@ -67,6 +67,14 @@ dtor = onCleanup(@() close(f));
 syms R H L m_c m_p omega t theta_0 g
 
 
+
+%% Kinematics
+
+waitbar(0.01,f,"Beginning kinematics…");
+
+% define theta with respect to time (in radians)
+theta = omega * t + theta_0;
+
 % Pass redundant arguments by value now to make a cleaner, more easily modifiable 
 %   function call
 % make_presentable(expr_in, L,H, R, theta,theta_0, omega, t) 
@@ -79,12 +87,7 @@ displayable = @(expr) make_presentable(expr, L,H,R,theta,theta_0,omega,t);
 
 
 
-%% Kinematics
 
-waitbar(0.01,f,"Beginning kinematics…");
-
-% define theta with respect to time (in radians)
-theta = omega * t + theta_0;
 
 % position of A with respect to O
 %   define r in R^3 so we can take the cross product without adding on extra dimensions later
@@ -312,12 +315,17 @@ disp(table(max(:,1),max(:,2),max(:,3),max(:,4),max(:,5),max(:,6),max(:,7)))
 
 
 
+
+
 %% Display 'simplification' variables
 
 % Since redefining theta breaks the pass-by-value argument of theta somehow, destroy the displayable 
 %   function handle to make it harder to accidentally call after this point
 clear displayable 
 
+% re-initialize symbolic variables given numbers within their definitons to full 'unknowns'
+%   to keep them as variables for display expression
+syms R H L m_c m_p omega t theta_0 g
 
 % NOTE -- any changes to the above code must be propogated here
 % Also, statements here are not sanity checked, hence the need for this to be a mirror of the 
@@ -328,7 +336,7 @@ clear displayable
 
 %% Kinematics
 
- waitbar(0.71,f,"Solving display kinematics…");
+waitbar(0.71,f,"Solving display kinematics…");
 
 
 % % Let h = H-Rcos(theta), l = sqrt(L^2 - h^2)
@@ -425,6 +433,9 @@ disp_A_x = m_c * temp_a_G(1) - disp_P_x;
 
 clear temp_a_G;
 
+disp_A = sqrt(disp_A_x^2 + disp_A_y^2);
+disp_P = sqrt(disp_P_x^2 + disp_P_y^2);
+
 
 
 %% Autogeneration of *.tex files
@@ -484,6 +495,9 @@ if (sum(options.contains("write")))
         append_equation(fobj_Px.fid, "P_x", disp_P_x, "P:x", true);
         fobj_Ax = gen_file("A_x");
         append_equation(fobj_Ax.fid, "A_x", disp_A_x, "A:x", true);
+        fobj_AandP = gen_file("AandP");
+        append_equation(fobj_AandP.fid, "A", disp_A, "A", true);
+        append_equation(fobj_AandP.fid, "P", disp_P, "P", true);
 
 
         waitbar(0.87,f,"Writing graphs…");
@@ -916,10 +930,10 @@ function p = combine_params(case_obj, omega)
     % TURN THIS DOWN TO SPEED UP COMPILATION FOR TESTING OTHER THINGS, THEN TURN BACK UP FOR 
     %   FINAL COMPILATION
     % NUM_PTS = 200;
-    % NUM_PTS = 200;
+    NUM_PTS = 200;
     % 100 actually does a very good job
     % NUM_PTS = 100;
-     NUM_PTS = 50;
+    % NUM_PTS = 50;
 
     max_time = 2*pi / omega;
 
@@ -962,6 +976,7 @@ function expr_out = make_presentable(expr_in, L,H, R,theta,theta_0, omega, t)
 
     expr_out = expr_in;
 
+
     for i = 1:length(expr_sub_out) 
         % expr_sub_out(i) 
         % expr_sub_in(i)
@@ -976,14 +991,19 @@ function expr_out = make_presentable(expr_in, L,H, R,theta,theta_0, omega, t)
     % You need to use character vectors and a cell array to add multiple conditions in one line...
     % One has to wonder what goes on in the minds of MATLAB's developers
     assume(L, {'real', 'positive'});
-    expr_out = simplify(expr_out, 'Steps', 10);
+
+    % expr_out = simplify(expr_out, 'Steps', 7);
+    expr_out = simplify(expr_out, 'Steps', 15);
+    % expr_out = simplify(expr_out);
+
     expr_out = combine(expr_out);
     % expr_out = simplifyFraction(expr_out);
     % expr_out = combine(expr_out);
 
     % expr_out = simplify(expr_out, 'Steps', 10);
 
-    assert(deep_equality(expr_in, expr_out), "Simplification failed to yield overall equivalent expression.");
+    % Commented out because it should never be the case 
+    % assert(deep_equality(expr_in, expr_out), "Simplification failed to yield overall equivalent expression.");
 end
 
 

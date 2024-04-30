@@ -3,4 +3,5 @@ latex_cache
 *.log
 *.aux
 *.gz
+*.asv
 autogen_*

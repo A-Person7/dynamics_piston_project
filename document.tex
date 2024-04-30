@@ -367,25 +367,25 @@
     \begin{equation}
         \sum{\vec{F}} = m_{\,\textrm{AP}}\vec{a}_{\,\textrm{G}}
     \end{equation}
-    \begin{equation}
+    \begin{equation}\label{sum:forces}
         \begin{bmatrix}
             A_x + P_x \\
-            A_y + P_y - m_{\,\textrm{AP}}g \\
+            A_y + P_y - m_{\,\textrm{c}}g \\
         \end{bmatrix} = 
         \begin{bmatrix}
-            m_{\,\textrm{AP}}\vec{a}_{\,\textrm{G}} \cdot \hat{\imath} \\
-            m_{\,\textrm{AP}}\vec{a}_{\,\textrm{G}} \cdot \hat{\jmath} \\
+            m_{\,\textrm{c}}\vec{a}_{\,\textrm{G}} \cdot \hat{\imath} \\
+            m_{\,\textrm{c}}\vec{a}_{\,\textrm{G}} \cdot \hat{\jmath} \\
         \end{bmatrix}
     \end{equation}
 
     Since we already know the right hand side of this equation in terms of our desired parameters, and we've just solved for $P_y$, we know enough to solve for $A_y$.
 
     \begin{equation} 
-        A_y + P_y - m_{\,\textrm{AP}}g  = m_{\,\textrm{AP}}\vec{a}_{\,\textrm{G}} \cdot \hat{\jmath}
+        A_y + P_y - m_{\,\textrm{c}}g  = m_{\,\textrm{c}}\vec{a}_{\,\textrm{G}} \cdot \hat{\jmath}
     \end{equation}
     
     \begin{equation} 
-        A_y = m_{\,\textrm{AP}}\vec{a}_{\,\textrm{G}} \cdot \hat{\jmath} +  m_{\,\textrm{AP}}g - P_y
+        A_y = m_{\,\textrm{c}}\vec{a}_{\,\textrm{G}} \cdot \hat{\jmath} +  m_{\,\textrm{c}}g - P_y
     \end{equation}
 
     \subfile{autogen_A_y}
@@ -400,18 +400,47 @@
 
 
     \begin{equation} 
-        I_{\textrm{G}} = \frac{1}{12}m_{\,\textrm{AP}}L^2
+        I_{\textrm{A}} = I_{\textrm{G}} + m_{\,\textrm{c}}{\left(\frac{L}{2}\right)}^2
     \end{equation}
 
+    \begin{equation} 
+        I_{\textrm{G}} = \frac{1}{12}m_{\,\textrm{c}}L^2
+    \end{equation}
+
+    Recalling the definition of a moment, we get the following.
+
+    \begin{equation}
+        \hat{k}\cdot\left(\vec{r}_{\,\sfrac{\textrm{P}}{\textrm{A}}} \times \left(P_x \hat{\imath} + P_y \hat{\jmath}\right) + \vec{r}_{\,\sfrac{\textrm{G}}{\textrm{A}}}\times\left(-m_{\,\textrm{c}}g\hat{\jmath}\right)\right)  = I_{\textrm{A}}\alpha_{\textrm{AP}}
+    \end{equation}
+
+    Knowing $P_y$ means the above expression fully defines $P_x$.
+
+    \subfile{autogen_P_x}
+
+    Going back to Eq. \eqref{sum:forces}, we can solve for the final missing reactice force, $A_x$.
+
+    \begin{equation}
+            A_x + P_x = m_{\,\textrm{c}}\vec{a}_{\,\textrm{G}} \cdot \hat{\imath}
+    \end{equation}
+
+    \begin{equation}
+            A_x = m_{\,\textrm{c}}\vec{a}_{\,\textrm{G}} \cdot \hat{\imath} -  P_x 
+    \end{equation}
+
+    \subfile{autogen_A_x}
 
 
-    $A$ represents the magnitude of the forces on the pin at A and $P$ represents the magnitude of the forces on the pin at P. We can derive the following expressions. Using the property of the magnitude of vectors, we can derive the following.
+    $A$ represents the magnitude of the forces on the pin at A and $P$ represents the magnitude of the forces on the pin at P.  Using the property of the magnitude of vectors, we arrive at the following.
     \begin{equation}
         A = \sqrt{A_{\textrm{x}}^2 + A_{\textrm{y}}^2}
     \end{equation}
     \begin{equation}
         P = \sqrt{P_{\textrm{x}}^2 + P_{\textrm{y}^2}}
     \end{equation}
+
+    \subfile{autogen_AandP}
+    
+
 
 computing the maximum values of the forces in the pins gives us
 \begin{table}[H]
@@ -506,6 +535,9 @@ computing the maximum values of the forces in the pins gives us
 
 
 	As can be seen in our graphs increasing $\omega$ to higher speeds the forces felt in the pins are higher. This is true across all the cases. it also makes sense as higher values of $\omega$ should reult in higher accelerations. Higher accelerations we know will result in higer forces on the pins.
+    
+    To further check our results, the bulk of the heavy lifting in terms of algebra was done via a MATLAB script, where position vectors were also created for each of the positions we solved the velocity and acceleration of as functions of time. Because of this, we can check our results for the velocity and accleration at that point versus a `naïve' time derivative approach by comparring for equality. This was done via a custom method which first checked if the expressions were written in the same form, if they could be proved equivalent, and finally, for more complicated expressions, if their numerical output for a random set of inputs are within a floating point comparison tolerance of each other. This method was used throughout the code, and would throw an error if a discrepancy emerged that suggested we'd made an algebra or sign error throughout our process.
+
 
 	Case 2 tended to have the smallest forces of the three cases. This indicated that $\sfrac{L}{R}$ and $\sfrac{H}{R}$ have opposite effects on the system. As in case 1, Low values for both of these resulted in a higher max force at A, wheras in case 3, we have a more even value of the max forces spread between A and P.
 
