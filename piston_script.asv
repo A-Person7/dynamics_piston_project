@@ -200,17 +200,15 @@ P_x = (-I_A * alpha_AP - m_c * g * (r_PA(1))/2 + P_y * r_PA(1))/(r_PA(2));
 % from sum of forces of the crank
 A_x = m_c * temp_a_G(1) - P_x;
 
-waitbar(0.35,f,"Cleaning up kinetics (P_x)…");
+ waitbar(0.35,f,"Cleaning up kinetics (component-wise)…");
 
 P_x = displayable(P_x);
-waitbar(0.35+0.0375,f,"Cleaning up kinetics (A_x)…");
 A_x = displayable(A_x);
-waitbar(0.35+0.0375*2,f,"Cleaning up kinetics (P_y)…");
-
 P_y = displayable(P_y);
-waitbar(0.35+0.0375*3,f,"Cleaning up kinetics (A_y)…");
 A_y = displayable(A_y);
 
+
+waitbar(0.50,f,"Cleaning up kinetics (magnitude)…");
 
 clear temp_a_G;
 
@@ -219,10 +217,8 @@ clear temp_a_G;
 A = sqrt(A_x^2 + A_y^2);
 P = sqrt(P_x^2 + P_y^2);
 
-waitbar(0.50,f,"Cleaning up kinetics (A)…");
-A = displayable(A);
-waitbar(0.60,f,"Cleaning up kinetics (P)…");
-P = displayable(P);
+% A = displayable(A);
+% P = displayable(P);
 
 
  waitbar(0.70,f,"Defining useful quantities…");
@@ -260,8 +256,6 @@ cases = [case1, case2, case3];
 omega_values = [1000, 2200, 5000] * 2 * pi / 60;
 omega_strs = ["1,000 rpm", "2,200 rpm", "5,000 rpm"];
 
-%% max forces value computation
-
 % find the max values of the forces
 % index 1 - omega_value
 % index 2 - t A
@@ -275,7 +269,7 @@ max = zeros(3*length(omega_values),7);
 for i = 1:length(omega_values)
 
     
-    R=0.075;
+    R=0.0075;
     g=-9.81;
     m_c=0.3;
     m_p=0.4;
@@ -284,30 +278,30 @@ for i = 1:length(omega_values)
     H_arr = [0,0.025,0.125];
     theta_0 = 0;
     % brute force approximation of numerical global maxes
-    % keep the maxxes and save them
-    for k = 0:2
-        max(3*k+i,1)=3*k+i;
+    for k = 1:3
+        max(3*(k-1)+i,1)=3*(k-1)+i;
         for j = 0:(2*pi()/omega_values(i))/20:2*pi()/omega_values(i)
             t=j;
             omega=omega_values(i);
-            L=L_arr(k+1);
-            H=H_arr(k+1);
-            if(abs(subs(A)))>max(3*k+i,4)
-                max(3*k+i,2)=t;
-                max(3*k+i,3)=omega*t;
-                max(3*k+i,4)=subs(A);
+            L=L_arr(k);
+            H=H_arr(k);
+            if(abs(subs(A)))>max(3*(k-1)+i,4)
+                %syms R H L m_c m_p omega t theta_0 g
+                max(3*(k-1)+i,2)=t;
+                max(3*(k-1)+i,3)=omega_values(i)*t;
+                max(3*(k-1)+i,4)=subs(A);
             end
-            if(abs(subs(P)))>max(3*k+i,7)
-                max(3*k+i,5)=t;
-                max(3*k+i,6)=omega*t;
-                max(3*k+i,7)=subs(P);
+            if(abs(subs(P)))>max(3*(k-1)+i,7)
+                %syms R H L m_c m_p omega t theta_0 g
+                max(3*(k-1)+i,5)=t;
+                max(3*(k-1)+i,6)=omega_values(i)*t;
+                max(3*(k-1)+i,7)=subs(P);
             end
         end
     end
 end
 
 % output the table of maxes
-% as of now this will be manually coppied over -- not autogened
 disp(table(max(:,1),max(:,2),max(:,3),max(:,4),max(:,5),max(:,6),max(:,7)))
 
 
@@ -478,13 +472,6 @@ if (sum(options.contains("write")))
 
         fobj_Py = gen_file("P_y");
         append_equation(fobj_Py.fid, "P_y", disp_P_y, "P:y", true);
-        fobj_Ay = gen_file("A_y");
-        append_equation(fobj_Ay.fid, "A_y", disp_A_y, "A:y", true);
-        fobj_Px = gen_file("P_x");
-        append_equation(fobj_Px.fid, "P_x", disp_P_x, "P:x", true);
-        fobj_Ax = gen_file("A_x");
-        append_equation(fobj_Ax.fid, "A_x", disp_A_x, "A:x", true);
-
 
         waitbar(0.87,f,"Writing graphs…");
 
@@ -613,7 +600,7 @@ function equal = deep_equality(expr1, expr2)
             % TODO -- add justification for tolerance and discuss acceptable failure probabilities
             % What are the odds this *and* our calculationrs are wrong?
             % TODO -- replace tolerance with 0.5 from histogram?
-            equal = check_equality_brute_force(expr1(i), expr2(i), 5, 0.001); 
+            equal = check_equality_brute_force(expr1(i), expr2(i), 10, 0.001); 
             if (~equal) 
                 return;
             end

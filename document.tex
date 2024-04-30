@@ -407,6 +407,49 @@
         P = \sqrt{P_{\textrm{x}}^2 + P_{\textrm{y}^2}}
     \end{equation}
 
+computing the maximum values of the forces in the pins gives us
+\begin{table}[H]
+        \caption[Table]{Max forces at A}\label{tab:aForce}
+        \centering{
+            \begin{tabular}{llr}
+            \toprule
+           \omega (rev/m) & Case & t(s)  & \theta(rad) & max force (N) \\
+            \midrule
+                1000 &1 &0.015& 1.5708 & 881.49 \\
+	2200 &1 & 0.006818&1.5708&4251.3 \\
+	5000 &1 & 0.003&1.5708&21943 \\
+                1000 & 2&0.015&1.5708 & 755.89 \\
+	2200&2&0.0068182&1.5708&3643.3\\
+	5000&2&0.003&1.5708&18802\\
+                1000 & 3 & 0.012&1.2566&762.04 \\
+	2200&3&0.015&3.4558&3699\\
+	5000&3&0.0066&3.4558&19132\\
+            \bottomrule
+            \end{tabular}
+        }
+    \end{table}
+
+\begin{table}[H]
+        \caption[Table]{Max forces at P}\label{tab:pForce}
+        \centering{
+            \begin{tabular}{llr}
+            \toprule
+           \omega (rev/m) & Case & t(s)  & \theta(rad) & max force (N) \\
+            \midrule
+                1000 &1 &0.015& 1.5708 &552.43 \\
+	2200 &1 & 0.006818&1.5708&2658.7 \\
+	5000 &1 & 0.003&1.5708&13717 \\
+                1000 & 2&0.015&1.5708 & 463.4 \\
+	2200&2&0.0068182&1.5708&2227.6\\
+	5000&2&0.003&1.5708&11489\\
+                1000 & 3 & 0.033&3.4558&558.45 \\
+	2200&3&0.015&3.4558&2726.3\\
+	5000&3&0.0066&3.4558&14108\\
+            \bottomrule
+            \end{tabular}
+        }
+    \end{table}
+
 	\section{Discussion of results}
 	One very clear verification we can do is check that they cycle is actually repeatable. This means that the value and slope at the end of the cylce and begining of the cylce should be equivalent. This is something you can easily see in our graphs holds true, which is good. 
 
