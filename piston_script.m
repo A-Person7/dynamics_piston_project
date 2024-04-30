@@ -200,15 +200,17 @@ P_x = (-I_A * alpha_AP - m_c * g * (r_PA(1))/2 + P_y * r_PA(1))/(r_PA(2));
 % from sum of forces of the crank
 A_x = m_c * temp_a_G(1) - P_x;
 
- waitbar(0.35,f,"Cleaning up kinetics (component-wise)…");
+waitbar(0.35,f,"Cleaning up kinetics (P_x)…");
 
 P_x = displayable(P_x);
+waitbar(0.35+0.0375,f,"Cleaning up kinetics (A_x)…");
 A_x = displayable(A_x);
+waitbar(0.35+0.0375*2,f,"Cleaning up kinetics (P_y)…");
+
 P_y = displayable(P_y);
+waitbar(0.35+0.0375*3,f,"Cleaning up kinetics (A_y)…");
 A_y = displayable(A_y);
 
-
-waitbar(0.50,f,"Cleaning up kinetics (magnitude)…");
 
 clear temp_a_G;
 
@@ -217,8 +219,10 @@ clear temp_a_G;
 A = sqrt(A_x^2 + A_y^2);
 P = sqrt(P_x^2 + P_y^2);
 
-% A = displayable(A);
-% P = displayable(P);
+waitbar(0.50,f,"Cleaning up kinetics (A)…");
+A = displayable(A);
+waitbar(0.60,f,"Cleaning up kinetics (P)…");
+P = displayable(P);
 
 
  waitbar(0.70,f,"Defining useful quantities…");
@@ -424,6 +428,13 @@ if (sum(options.contains("write")))
 
         fobj_Py = gen_file("P_y");
         append_equation(fobj_Py.fid, "P_y", disp_P_y, "P:y", true);
+        fobj_Ay = gen_file("A_y");
+        append_equation(fobj_Ay.fid, "A_y", disp_A_y, "A:y", true);
+        fobj_Px = gen_file("P_x");
+        append_equation(fobj_Px.fid, "P_x", disp_P_x, "P:x", true);
+        fobj_Ax = gen_file("A_x");
+        append_equation(fobj_Ax.fid, "A_x", disp_A_x, "A:x", true);
+
 
         waitbar(0.87,f,"Writing graphs…");
 
@@ -551,7 +562,7 @@ function equal = deep_equality(expr1, expr2)
             % TODO -- add justification for tolerance and discuss acceptable failure probabilities
             % What are the odds this *and* our calculationrs are wrong?
             % TODO -- replace tolerance with 0.5 from histogram?
-            equal = check_equality_brute_force(expr1(i), expr2(i), 10, 0.001); 
+            equal = check_equality_brute_force(expr1(i), expr2(i), 5, 0.001); 
             if (~equal) 
                 return;
             end
