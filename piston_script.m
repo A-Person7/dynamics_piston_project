@@ -16,6 +16,19 @@
 %       Most of the values you'd expect to be vectors are vectors anyways (typically 
 %       with an i, j, and k components defined to span R^3 to allow for the use of the cross 
 %       product).
+%  Variables of the form disp_* are the corresponding `display' version of their corresponding 
+%       variable without the disp_ prefix. They are intended to look nices for display, but 
+%       are equivalent expressions (although there currently are not tools to evaluate this 
+%       to numeric/double outputs). They are NOT sanity checked, and therefore must strictly 
+%       match the algebra applied to their checked `parent' variable they're named after.
+
+% This code takes a good while to run, primarily due to the displayable function handle being 
+%   called so often in the attempt to simplify some expressions. It helps a bit, primarily for 
+%   velocity terms, but the façade of simplicity drops very quickly, hence the `pure' constant 
+%   parameter + time expressions being relegated to an appendix while their nicer-looking 
+%   display versions are featured in the main body of the document. Note that this is still 
+%   *nicer*, not nice, as they can still get rather ugly.
+
 
 %% Settings
 % Variable to store options passed to the script
@@ -41,6 +54,12 @@ if (~exist("options"))
 end
 
 
+
+f = waitbar(0,"Beginning…");
+% guarantee f will be closed if something goes wrong
+dtor = onCleanup(@() close(f));
+
+
 %% Parameter initialization 
 % t is time, theta_0 is the angle theta when t = 0 seconds, g is gravity,
 %   other parameters are given in problem description
@@ -61,6 +80,9 @@ displayable = @(expr) make_presentable(expr, L,H,R,theta,theta_0,omega,t);
 
 
 %% Kinematics
+
+f = waitbar(0.01,"Beginning kinematics…");
+
 % define theta with respect to time (in radians)
 theta = omega * t + theta_0;
 
@@ -83,8 +105,13 @@ r_GP = r_G - r_P;
 
 v_A = diff(r_A, t);
 
+
+
 % sanity check
 assert(deep_equality(v_A, cross(omega*[0,0,1],r_A)), "Velocity of point A is not what's expected.");
+
+
+f = waitbar(0.05,"Solving velocities…");
 
 % linear algebra solves every problem if you know what you're doing 
 
@@ -101,6 +128,9 @@ omega_AP = temp(1);
 v_P = temp(2);
 clear temp;
 
+f = waitbar(0.10,"Cleaning up velocities…");
+
+
 % % at this point, this is the closest thing to simplification that can be done
 v_P = displayable(v_P);
 omega_AP = displayable(omega_AP);
@@ -110,9 +140,14 @@ omega_AP = displayable(omega_AP);
 assert(deep_equality(v_P*[0,1,0], diff(r_P, t)), "Velocity of point P is not what's expected.");
 assert(deep_equality(v_A + omega_AP*cross([0,0,1],r_GA), diff(r_G, t)), "Velocity of point G is not what's expected.");
 
+
+f = waitbar(0.15,"Checking velocities…");
+
 a_A = -omega^2*r_A;
 
 assert(deep_equality(diff(v_A,t), a_A), "Acceleration of point A is not what's expected.");
+
+f = waitbar(0.17,"Solving accelerations…");
 
 
 % temp = [planar_truncate(cross([0,0,1],r_PA)).',[0;-1]]^(-1)*(planar_truncate(omega_AP^2*r_PA - a_A).');
@@ -121,8 +156,12 @@ alpha_AP = temp(1);
 a_P = temp(2);
 clear temp;
 
+f = waitbar(0.20,"Cleaning up acceleration…");
+
 a_P = displayable(a_P);
 alpha_AP = displayable(alpha_AP);
+
+f = waitbar(0.25,"Checking accelerations…");
 
 assert(deep_equality(a_P, diff(v_P, t)), "Acceleration of point P is not what's expected.");
 
@@ -134,6 +173,7 @@ a_G = displayable(a_G);
 assert(deep_equality(a_G, diff(r_G, t, 2)), "Acceleration of point G is not what's expected.");
 
 
+f = waitbar(0.30,"Solving kinetics…");
 
 %% Kinetics
 I_G = 1/12 * m_c*L^2;
@@ -160,10 +200,15 @@ P_x = (-I_A * alpha_AP - m_c * g * (r_PA(1))/2 + P_y * r_PA(1))/(r_PA(2));
 % from sum of forces of the crank
 A_x = m_c * temp_a_G(1) - P_x;
 
+f = waitbar(0.35,"Cleaning up kinetics (component-wise)…");
+
 P_x = displayable(P_x);
 A_x = displayable(A_x);
 P_y = displayable(P_y);
 A_y = displayable(A_y);
+
+
+f = waitbar(0.50,"Cleaning up kinetics (magnitude)…");
 
 clear temp_a_G;
 
@@ -171,6 +216,12 @@ clear temp_a_G;
 % Magnitude 
 A = sqrt(A_x^2 + A_y^2);
 P = sqrt(P_x^2 + P_y^2);
+
+A = displayable(A);
+P = displayable(P);
+
+
+f = waitbar(0.70,"Defining useful quantities…");
 
 %% Function handles
 
@@ -209,6 +260,11 @@ omega_strs = ["1,000 rpm", "2,200 rpm", "5,000 rpm"];
 
 %% Display 'simplification' variables
 
+% Since redefining theta breaks the pass-by-value argument of theta somehow, destroy the displayable 
+%   function handle to make it harder to accidentally call after this point
+clear displayable 
+
+
 % NOTE -- any changes to the above code must be propogated here
 % Also, statements here are not sanity checked, hence the need for this to be a mirror of the 
 %   above code.
@@ -217,6 +273,9 @@ omega_strs = ["1,000 rpm", "2,200 rpm", "5,000 rpm"];
 %   destroyed.
 
 %% Kinematics
+
+f = waitbar(0.71,"Solving display kinematics…");
+
 
 % % Let h = H-Rcos(theta), l = sqrt(L^2 - h^2)
 syms h l theta
@@ -276,6 +335,10 @@ disp_a_G = disp_a_A + disp_alpha_AP*cross([0,0,1], disp_r_GA) - disp_omega_AP^2 
 
 
 %% Kinetics
+
+
+f = waitbar(0.80,"Solving display kinetics…");
+
 % these are nice enough to leave as-is
 I_G = 1/12 * m_c*L^2;
 I_A = I_G + (L/2)^2*m_c;
@@ -312,6 +375,8 @@ clear temp_a_G;
 
 %% Autogeneration of *.tex files
 if (sum(options.contains("write")))
+
+
     % MATLAB is weird and introduces a quasi-RAII (Resource Aquisition Is Initialization) 
     %   destructor scheme, and then fails to innately guarantee stuff will go out of scope 
     % Therefore, my choices are either wrap everything in one function and not define the 
@@ -320,6 +385,7 @@ if (sum(options.contains("write")))
     %   to pass them all into a function which would be a hassle, or to add a try-catch 
     %   statement here as a failsafe 
     try 
+        f = waitbar(0.85,"Writing equations…");
         fobj_fn_def = gen_file("fn_def");
 
         % fid, section name, section label (replace with "" for none)
@@ -340,10 +406,12 @@ if (sum(options.contains("write")))
         append_equation(fobj_fn_def.fid, "\omega_{\textrm{AP}}", omega_AP, "fn_def:omega:AP", false);
         append_equation(fobj_fn_def.fid, "a_{\,\textrm{P}}", a_P, "fn_def:a:P", true);
         append_equation(fobj_fn_def.fid, "\alpha_{\textrm{AP}}", alpha_AP, "fn_def:alpha:AP", true);
-        append_equation(fobj_fn_def.fid, "A_{\textrm{x}}", displayable(A_x), "fn_def:A:x", true);
-        append_equation(fobj_fn_def.fid, "A_{\textrm{y}}", displayable(A_y), "fn_def:A:y", true);
-        append_equation(fobj_fn_def.fid, "P_{\textrm{y}}", displayable(P_y), "fn_def:P:y", true);
-        append_equation(fobj_fn_def.fid, "P_{\textrm{x}}", displayable(P_x), "fn_def:P:x", true);
+        append_equation(fobj_fn_def.fid, "A_{\textrm{x}}", A_x, "fn_def:A:x", true);
+        append_equation(fobj_fn_def.fid, "A_{\textrm{y}}", A_y, "fn_def:A:y", true);
+        append_equation(fobj_fn_def.fid, "P_{\textrm{y}}", P_y, "fn_def:P:y", true);
+        append_equation(fobj_fn_def.fid, "P_{\textrm{x}}", P_x, "fn_def:P:x", true);
+        append_equation(fobj_fn_def.fid, "A", A, "fn_def:A", true);
+        append_equation(fobj_fn_def.fid, "P", P, "fn_def:P", true);
 
 
         fobj_vel = gen_file("vel");
@@ -353,6 +421,11 @@ if (sum(options.contains("write")))
         fobj_acc = gen_file("acc");
         append_equation(fobj_acc.fid, "a_{\,\textrm{P}}", disp_a_P, "a:P", true);
         append_equation(fobj_acc.fid, "\alpha_{\textrm{AP}}", disp_alpha_AP, "alpha:AP", false);
+
+        fobj_Py = gen_file("P_y");
+        append_equation(fobj_Py.fid, "P_y", disp_P_y, "P:y", true);
+
+        f = waitbar(0.87,"Writing graphs…");
 
         % Graphs!
         fobj_graphs = gen_file("graphs");
@@ -418,6 +491,8 @@ if (sum(options.contains("write")))
 
         clear fobj*;
     catch ME
+        f = waitbar(0,"Failed.");
+        clear dtor
         clear fobj*;
         % Definitely didn't forget this earlier and wonder why some of the code in the 
         %   try statement wasn't executing when I didn't get any warnings/errors...
@@ -425,6 +500,8 @@ if (sum(options.contains("write")))
     end
 end
 
+f = waitbar(1,"Finished.");
+clear dtor
 
 
 % utility function to convert a vector in R^3 to one in R^2. MATLAB is stupid and doesn't allow 

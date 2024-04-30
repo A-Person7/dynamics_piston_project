@@ -345,7 +345,7 @@
     Here, $N$ represents the normal force on the piston block exerted by its track simplified from a distributed force to a single point force. Let's sum forces on the piston block in the $\hat{\jmath}$ direction. Note that point P is coincident with the piston block's center of gravity/mass.
 
     \begin{equation}
-        \hat{\jmath}\cdot \sum{\vec{F}} = \hat{j}\cdot m_{\,\textrm{P}}\vec{a}_{\,\textrm{P}}
+        \hat{\jmath}\cdot \sum{\vec{F}} = \hat{\jmath}\cdot m_{\,\textrm{P}}\vec{a}_{\,\textrm{P}}
     \end{equation}
     \begin{equation}
         -P_y - m_{\,\textrm{P}}g = m_{\,\textrm{P}}a_{\,\textrm{P}}
@@ -356,12 +356,40 @@
     \begin{equation}
         P_y = -m_{\,\textrm{P}}a_{\,\textrm{P}} -  m_{\,\textrm{P}}g
     \end{equation}
+    \begin{equation}
+        P_y = -m_{\,\textrm{P}}\left(a_{\,\textrm{P}} +  g\right)
+    \end{equation}
+
+    \subfile{autogen_P_y}
 
     Now that we know the values of one of our forces, summing forces and moments about the rod AP is sufficient to fully define the remaining forces\footnote{It is easy to be mislead by summing forces across the rod AP and moments about point A and point P that we \textit{only} need to use the free body diagram for the rod. However, these relations alone are not well-posed, and need one force to be specified beforehand to yield useful results.}.
 
     \begin{equation}
         \sum{\vec{F}} = m_{\,\textrm{AP}}\vec{a}_{\,\textrm{G}}
     \end{equation}
+    \begin{equation}
+        \begin{bmatrix}
+            A_x + P_x \\
+            A_y + P_y - m_{\,\textrm{AP}}g \\
+        \end{bmatrix} = 
+        \begin{bmatrix}
+            m_{\,\textrm{AP}}\vec{a}_{\,\textrm{G}} \cdot \hat{\imath} \\
+            m_{\,\textrm{AP}}\vec{a}_{\,\textrm{G}} \cdot \hat{\jmath} \\
+        \end{bmatrix}
+    \end{equation}
+
+    Since we already know the right hand side of this equation in terms of our desired parameters, and we've just solved for $P_y$, we know enough to solve for $A_y$.
+
+    \begin{equation} 
+        A_y + P_y - m_{\,\textrm{AP}}g  = m_{\,\textrm{AP}}\vec{a}_{\,\textrm{G}} \cdot \hat{\jmath}
+    \end{equation}
+
+    While it is possible to sum moments anywhere, it somewhat simplifies things if we sum forces about A or P. Let's chose point A.
+
+    \begin{equation}
+        \hat{k}\cdot\sum{\vec{M}_{\textrm{A}}} = I_{\textrm{A}}\alpha_{\textrm{AP}}
+    \end{equation}
+
 
 
 
