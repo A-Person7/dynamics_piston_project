@@ -81,7 +81,7 @@ displayable = @(expr) make_presentable(expr, L,H,R,theta,theta_0,omega,t);
 
 %% Kinematics
 
-f = waitbar(0.01,"Beginning kinematics…");
+waitbar(0.01,f,"Beginning kinematics…");
 
 % define theta with respect to time (in radians)
 theta = omega * t + theta_0;
@@ -111,7 +111,7 @@ v_A = diff(r_A, t);
 assert(deep_equality(v_A, cross(omega*[0,0,1],r_A)), "Velocity of point A is not what's expected.");
 
 
-f = waitbar(0.05,"Solving velocities…");
+waitbar(0.05,f,"Solving velocities…");
 
 % linear algebra solves every problem if you know what you're doing 
 
@@ -128,7 +128,7 @@ omega_AP = temp(1);
 v_P = temp(2);
 clear temp;
 
-f = waitbar(0.10,"Cleaning up velocities…");
+waitbar(0.10,f,"Cleaning up velocities…");
 
 
 % % at this point, this is the closest thing to simplification that can be done
@@ -141,13 +141,13 @@ assert(deep_equality(v_P*[0,1,0], diff(r_P, t)), "Velocity of point P is not wha
 assert(deep_equality(v_A + omega_AP*cross([0,0,1],r_GA), diff(r_G, t)), "Velocity of point G is not what's expected.");
 
 
-f = waitbar(0.15,"Checking velocities…");
+ waitbar(0.15,f,"Checking velocities…");
 
 a_A = -omega^2*r_A;
 
 assert(deep_equality(diff(v_A,t), a_A), "Acceleration of point A is not what's expected.");
 
-f = waitbar(0.17,"Solving accelerations…");
+waitbar(0.17,f,"Solving accelerations…");
 
 
 % temp = [planar_truncate(cross([0,0,1],r_PA)).',[0;-1]]^(-1)*(planar_truncate(omega_AP^2*r_PA - a_A).');
@@ -156,12 +156,12 @@ alpha_AP = temp(1);
 a_P = temp(2);
 clear temp;
 
-f = waitbar(0.20,"Cleaning up acceleration…");
+waitbar(0.20,f,"Cleaning up acceleration…");
 
 a_P = displayable(a_P);
 alpha_AP = displayable(alpha_AP);
 
-f = waitbar(0.25,"Checking accelerations…");
+waitbar(0.25,f,"Checking accelerations…");
 
 assert(deep_equality(a_P, diff(v_P, t)), "Acceleration of point P is not what's expected.");
 
@@ -173,7 +173,7 @@ a_G = displayable(a_G);
 assert(deep_equality(a_G, diff(r_G, t, 2)), "Acceleration of point G is not what's expected.");
 
 
-f = waitbar(0.30,"Solving kinetics…");
+waitbar(0.30,f,"Solving kinetics…");
 
 %% Kinetics
 I_G = 1/12 * m_c*L^2;
@@ -200,7 +200,7 @@ P_x = (-I_A * alpha_AP - m_c * g * (r_PA(1))/2 + P_y * r_PA(1))/(r_PA(2));
 % from sum of forces of the crank
 A_x = m_c * temp_a_G(1) - P_x;
 
-f = waitbar(0.35,"Cleaning up kinetics (component-wise)…");
+ waitbar(0.35,f,"Cleaning up kinetics (component-wise)…");
 
 P_x = displayable(P_x);
 A_x = displayable(A_x);
@@ -208,7 +208,7 @@ P_y = displayable(P_y);
 A_y = displayable(A_y);
 
 
-f = waitbar(0.50,"Cleaning up kinetics (magnitude)…");
+waitbar(0.50,f,"Cleaning up kinetics (magnitude)…");
 
 clear temp_a_G;
 
@@ -217,11 +217,11 @@ clear temp_a_G;
 A = sqrt(A_x^2 + A_y^2);
 P = sqrt(P_x^2 + P_y^2);
 
-A = displayable(A);
-P = displayable(P);
+% A = displayable(A);
+% P = displayable(P);
 
 
-f = waitbar(0.70,"Defining useful quantities…");
+ waitbar(0.70,f,"Defining useful quantities…");
 
 %% Function handles
 
@@ -274,7 +274,7 @@ clear displayable
 
 %% Kinematics
 
-f = waitbar(0.71,"Solving display kinematics…");
+ waitbar(0.71,f,"Solving display kinematics…");
 
 
 % % Let h = H-Rcos(theta), l = sqrt(L^2 - h^2)
@@ -337,7 +337,7 @@ disp_a_G = disp_a_A + disp_alpha_AP*cross([0,0,1], disp_r_GA) - disp_omega_AP^2 
 %% Kinetics
 
 
-f = waitbar(0.80,"Solving display kinetics…");
+waitbar(0.80,f,"Solving display kinetics…");
 
 % these are nice enough to leave as-is
 I_G = 1/12 * m_c*L^2;
@@ -385,7 +385,7 @@ if (sum(options.contains("write")))
     %   to pass them all into a function which would be a hassle, or to add a try-catch 
     %   statement here as a failsafe 
     try 
-        f = waitbar(0.85,"Writing equations…");
+        waitbar(0.85,f,"Writing equations…");
         fobj_fn_def = gen_file("fn_def");
 
         % fid, section name, section label (replace with "" for none)
@@ -425,7 +425,7 @@ if (sum(options.contains("write")))
         fobj_Py = gen_file("P_y");
         append_equation(fobj_Py.fid, "P_y", disp_P_y, "P:y", true);
 
-        f = waitbar(0.87,"Writing graphs…");
+        waitbar(0.87,f,"Writing graphs…");
 
         % Graphs!
         fobj_graphs = gen_file("graphs");
@@ -491,7 +491,7 @@ if (sum(options.contains("write")))
 
         clear fobj*;
     catch ME
-        f = waitbar(0,"Failed.");
+        waitbar(0,f,"Failed.");
         clear dtor
         clear fobj*;
         % Definitely didn't forget this earlier and wonder why some of the code in the 
@@ -500,7 +500,7 @@ if (sum(options.contains("write")))
     end
 end
 
-f = waitbar(1,"Finished.");
+waitbar(1,f,"Finished.");
 clear dtor
 
 
