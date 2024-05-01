@@ -346,7 +346,7 @@
 
     Here, $N$ represents the normal force on the piston block exerted by its track simplified from a distributed force to a single point force. Let's sum forces on the piston block in the $\hat{\jmath}$ direction. Note that point P is coincident with the piston block's center of gravity/mass.
 
-    \begin{equation}
+    \begin{equation}\label{fbd:p}
         \hat{\jmath}\cdot \sum{\vec{F}} = \hat{\jmath}\cdot m_{\,\textrm{P}}\vec{a}_{\,\textrm{P}}
     \end{equation}
     \begin{equation}
@@ -547,6 +547,8 @@ Computing the maximum values of the forces in the pins gives us these tables for
 
 
     Friction complicates matters; applying Coulomb dry friction models about rotational joints does not yield accurate results. To properly model the system, each interaction where any body rubs or scrapes against another, such as rotation at the pins, ought to be replaced with functions representing the equivalent forces and moments they impart. Further research into this problem would be needed to accurately model the assembly, and it might be necessary to use a good, empirical approximation of the frictional forces.
+
+    If the piston had a forcing function on it, and we knew the function, it'd be simple enough to model. Equation \eqref{fbd:p} would pick up this forcing function, and the equations that came after it would also have this extra term. If the forcing function were `significant' enough, it might even be worth building the system up from the piston's motion, rather than the crank-shaft's, although this introduces the complication that we always want the crankshaft to be able to rotate at a constant speed. Regardless, any functions of this complexity would mean we'd likely dispel the idea of having a final, human readable formula for values we care about, and we'd instead have generating functions for spitting out case-dependent values.
 
     The cyclical nature of the forces on the pins, and, consequently, the rod also give useful information for material selection. Not only do the rod and pins have to withstand these forces, they have to withstand countless cycles of them. With this in mind, an S-N curve plotting the number of cycles a material can survive with a given stress might be useful to optimize design longevity.
 
