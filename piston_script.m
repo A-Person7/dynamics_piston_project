@@ -86,9 +86,6 @@ theta = omega * t + theta_0;
 displayable = @(expr) make_presentable(expr, L,H,R,theta,theta_0,omega,t);
 
 
-
-
-
 % position of A with respect to O
 %   define r in R^3 so we can take the cross product without adding on extra dimensions later
 r_A = R*[cos(theta), sin(theta), 0];
@@ -487,6 +484,10 @@ if (sum(options.contains("write")))
         append_equation(fobj_acc.fid, "a_{\,\textrm{P}}", disp_a_P, "a:P", true);
         append_equation(fobj_acc.fid, "\alpha_{\textrm{AP}}", disp_alpha_AP, "alpha:AP", false);
 
+        fobj_cg_acc = gen_file("cg_acc");
+        append_equation(fobj_cg_acc.fid, "\vec{a}_{\textrm{G}}", disp_a_G, "a:G", true);
+
+
         fobj_Py = gen_file("P_y");
         append_equation(fobj_Py.fid, "P_y", disp_P_y, "P:y", true);
         fobj_Ay = gen_file("A_y");
@@ -805,10 +806,23 @@ function safe_out = gen_file(name)
 end
 
 % appends a valid LaTeX equation to a file
+% can take a row vector or a symbolic scalar
 function append_equation(fid, name, expr, label, scale)
     if (~isempty(label))
         label = "\label{" + label + "}";
     end
+
+    if (length(expr) > 2) 
+        expr = planar_truncate(expr);
+    end
+
+    % If expr is a vector, display it like a column vector with brackets instead of 
+    %   parenthesis
+    % Recall that .' is the pure transpose, and ' picks up (complex) conjugate terms
+    str_tex = latex(expr.');
+
+    str_tex = replace(str_tex, "\left(\begin{array}{c}","\begin{bmatrix}");
+    str_tex = replace(str_tex, "\end{array}\right)","\end{bmatrix}");
 
     % Another MATLAB oddity, str is defined everywhere in this function after the if statement 
     % Pretty much every other language would have it go out of scope
@@ -818,7 +832,7 @@ function append_equation(fid, name, expr, label, scale)
             '',
             '\begin{equation}' + label,
             '\resizebox{1.0\hsize}{!}{$',
-            name + "=" + latex(expr), 
+            name + "=" + str_tex, 
             '$}',
             '\end{equation}',
             ''
@@ -828,7 +842,7 @@ function append_equation(fid, name, expr, label, scale)
         str = join(char(10), {
             '',
             '\begin{equation}' + label,
-            name + "=" + latex(expr), 
+            name + "=" + str_tex, 
             '\end{equation}',
             ''
         });
