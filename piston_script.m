@@ -12,7 +12,7 @@
 %       add subscrips based on the literal name of the variable when outputting display text, 
 %       it may be hard to differentiate what's a vector and what's a scalar. I have come to the 
 %       executive decision that it's better to keep track in my head and in my code, then to 
-%       Hungarian-type every variable name, which would likely decrease legibility even more.
+%       Hungarian-type every variable cleaname, which would likely decrease legibility even more.
 %       Most of the values you'd expect to be vectors are vectors anyways (typically 
 %       with an i, j, and k components defined to span R^3 to allow for the use of the cross 
 %       product).
@@ -285,9 +285,10 @@ for i = 1:length(omega_values)
     theta_0 = 0;
     % brute force approximation of numerical global maxes
     % keep the maxxes and save them
+    % change the divisor of the increment to control precision
     for k = 0:2
         max(3*k+i,1)=3*k+i;
-        for j = 0:(2*pi()/omega_values(i))/20:2*pi()/omega_values(i)
+        for j = 0:(2*pi()/omega_values(i))/10:2*pi()/omega_values(i)
             t=j;
             omega=omega_values(i);
             L=L_arr(k+1);
